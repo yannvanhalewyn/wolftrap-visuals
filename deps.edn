@@ -1,0 +1,13 @@
+{:deps {org.clojure/clojure {:mvn/version "1.11.1"}
+        ;; hello_lwjgl/lwjgl {:mvn/version "2.9.1"}
+        overtone/overtone {:mvn/version "0.10.6"}
+        watchtower/watchtower {:mvn/version "0.1.1"}
+
+        org.lwjgl/lwjgl {:mvn/version "3.3.2"}
+        org.lwjgl/lwjgl$natives-macos {:mvn/version "3.3.2"}
+        org.lwjgl/lwjgl-opengl {:mvn/version "3.3.2"}
+        org.lwjgl/lwjgl-opengl$natives-macos {:mvn/version "3.3.2"}
+        org.lwjgl/lwjgl-glfw {:mvn/version "3.3.2"}
+        org.lwjgl/lwjgl-glfw$natives-macos {:mvn/version "3.3.2"}}
+ :aliases
+ {:run {:jvm-opts ["-XstartOnFirstThread"]}}}
