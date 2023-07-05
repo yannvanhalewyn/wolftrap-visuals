@@ -1,138 +1,64 @@
 (ns cev.window
   (:require [cev.shader :as shader]
+            [cev.vertex-array :as vertex-array]
             [clojure.core.async :as a])
   (:import [org.lwjgl.opengl GL GL11]
            [org.lwjgl.glfw GLFW GLFWErrorCallback GLFWKeyCallback]))
 
-;; ======================================================================
-;; spinning triangle in OpenGL 1.1
-(defonce globals (atom {:errorCallback nil
-                        :keyCallback   nil
-                        :window        nil
-                        :width         0
-                        :height        0
-                        :title         "none"
-                        :angle         0.0
-                        :last-time     0}))
+(defn set-key-callback [window]
+  (GLFW/glfwSetKeyCallback
+   window
+   ;; Technically this was '.free'd upon exit, not sure if necessary.
+   (proxy [GLFWKeyCallback] []
+     (invoke [window key scancode action mods]
+       (println "GOT KEY" key scancode action mods)
+       (shader/load "blue")
+       (when (and (= key GLFW/GLFW_KEY_ESCAPE)
+                  (= action GLFW/GLFW_RELEASE))
+         (GLFW/glfwSetWindowShouldClose window true))))))
 
+(defonce cleanup (atom []))
 
-(defn init-window
+(defn init
   [width height title]
+  ;; Technically this callback was .free'd up before exiting, not sure if necessary
+  (GLFW/glfwSetErrorCallback (GLFWErrorCallback/createPrint System/err))
 
-  (swap! globals assoc
-         :width     width
-         :height    height
-         :title     title
-         :last-time (System/currentTimeMillis))
-
-  (swap! globals assoc
-         :errorCallback (GLFWErrorCallback/createPrint System/err))
-  (GLFW/glfwSetErrorCallback (:errorCallback @globals))
   (when-not (GLFW/glfwInit)
     (throw (IllegalStateException. "Unable to initialize GLFW")))
 
   (GLFW/glfwDefaultWindowHints)
   (GLFW/glfwWindowHint GLFW/GLFW_VISIBLE GLFW/GLFW_FALSE)
   (GLFW/glfwWindowHint GLFW/GLFW_RESIZABLE GLFW/GLFW_TRUE)
-  (swap! globals assoc
-         :window (GLFW/glfwCreateWindow width height title 0 0))
-  (when (= (:window @globals) nil)
-    (throw (RuntimeException. "Failed to create the GLFW window")))
+  (let [window (GLFW/glfwCreateWindow width height title 0 0)]
+    (when-not window
+      (throw (RuntimeException. "Failed to create the GLFW window")))
 
-  (swap! globals assoc
-         :keyCallback
-         (proxy [GLFWKeyCallback] []
-           (invoke [window key scancode action mods]
-             (println "GOT KEY" key scancode action mods)
-             (shader/load "blue")
-             (when (and (= key GLFW/GLFW_KEY_ESCAPE)
-                        (= action GLFW/GLFW_RELEASE))
-               (GLFW/glfwSetWindowShouldClose (:window @globals) true)))))
-  (GLFW/glfwSetKeyCallback (:window @globals) (:keyCallback @globals))
+    (set-key-callback window)
 
-  (let [vidmode (GLFW/glfwGetVideoMode (GLFW/glfwGetPrimaryMonitor))]
-    (GLFW/glfwSetWindowPos
-     (:window @globals)
-     (/ (- (.width vidmode) width) 2)
-     (/ (- (.height vidmode) height) 2))
-    (GLFW/glfwMakeContextCurrent (:window @globals))
-    (GLFW/glfwSwapInterval 1)
-    (GLFW/glfwShowWindow (:window @globals))))
+    (let [vidmode (GLFW/glfwGetVideoMode (GLFW/glfwGetPrimaryMonitor))]
+      (GLFW/glfwSetWindowPos
+       window
+       (/ (- (.width vidmode) width) 2)
+       (/ (- (.height vidmode) height) 2))
+      (GLFW/glfwMakeContextCurrent window)
+      (GLFW/glfwSwapInterval 1)
+      (GLFW/glfwShowWindow window))
 
-(defn init-gl
-  []
-  (GL/createCapabilities)
-  (println "OpenGL version:" (GL11/glGetString GL11/GL_VERSION))
-  (GL11/glClearColor 0.0 0.0 0.0 0.0)
-  (GL11/glMatrixMode GL11/GL_PROJECTION)
-  (GL11/glOrtho 0.0 (:width @globals)
-                0.0 (:height @globals)
-                -1.0 1.0)
-  (GL11/glMatrixMode GL11/GL_MODELVIEW))
+    (GL/createCapabilities)
+    (println "OpenGL version:" (GL11/glGetString GL11/GL_VERSION))
+    (GL11/glClearColor 0.0 0.0 0.0 0.0)
+    (GL11/glMatrixMode GL11/GL_PROJECTION)
+    (GL11/glOrtho 0.0 width
+                  0.0 height
+                  -1.0 1.0)
+    (GL11/glMatrixMode GL11/GL_MODELVIEW)
 
-(defn draw-triangle
-  []
-  (let [{:keys [width height angle]} @globals
-        w2 (/ width 2.0)
-        h2 (/ height 2.0)]
-    (GL11/glClear (bit-or GL11/GL_COLOR_BUFFER_BIT  GL11/GL_DEPTH_BUFFER_BIT))
-    (GL11/glLoadIdentity)
-    (GL11/glTranslatef w2 h2 0)
-    (GL11/glRotatef angle 0 0 1)
-    (GL11/glScalef 2 2 1)
-    (GL11/glBegin GL11/GL_TRIANGLES)
-    (GL11/glColor3f 1.0 0.0 0.0)
-    (GL11/glVertex2i 100 0)
-    (GL11/glColor3f 0.0 1.0 0.0)
-    (GL11/glVertex2i -50 86.6)
-    (GL11/glColor3f 0.0 0.0 1.0)
-    (GL11/glVertex2i -50 -86.6)
-    (GL11/glEnd)))
+    window))
 
-(defn update-globals
-  []
-  (let [{:keys [width height angle last-time]} @globals
-        cur-time (System/currentTimeMillis)
-        delta-time (- cur-time last-time)
-        next-angle (+ (* delta-time 0.05) angle)
-        next-angle (if (>= next-angle 360.0)
-                     (- next-angle 360.0)
-                     next-angle)]
-    (swap! globals assoc
-           :angle next-angle
-           :last-time cur-time)))
-
-(defn draw
-  []
-  ;; (draw-triangle)
-
-  (GL11/glClear (bit-or GL11/GL_COLOR_BUFFER_BIT  GL11/GL_DEPTH_BUFFER_BIT))
-  (shader/use)
-  (GL11/glEnd)
-  )
-
-(defn init
-  []
-  (try
-    (init-window 800 600 "alpha")
-    (init-gl)
-    ;; (shader/load "blue")
-    ;; (shader/load "blue")
-    #_(future (Thread/sleep 5000)
-            (println "Loading shader")
-            (shader/load))
-    #_(a/go
-      (a/<! (a/timeout 5000))
-      (println "Running block")
-      (shader/load "blue"))
-    (while (not (GLFW/glfwWindowShouldClose (:window @globals)))
-      (update-globals)
-      (draw)
-      (GLFW/glfwSwapBuffers (:window @globals))
-      (GLFW/glfwPollEvents))
-    (shader/cleanup)
-    (.free (:errorCallback @globals))
-    (.free (:keyCallback @globals))
-    (GLFW/glfwDestroyWindow (:window @globals))
-    (finally
-      (GLFW/glfwTerminate))))
+(defn init2 []
+  (GLFW/glfwInit)
+  (let [window (GLFW/glfwCreateWindow 800 600 "My Window" 0 0)]
+    (GLFW/glfwMakeContextCurrent window)
+    (GL/createCapabilities)
+    window))

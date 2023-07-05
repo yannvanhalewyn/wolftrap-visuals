@@ -22,33 +22,24 @@
       (throw (Exception. (GL20/glGetProgramInfoLog program 1024))))
     program))
 
-(defonce program-atom (atom nil))
-
 (defn read-shaders [name]
   (println (slurp (io/resource (str "cev/shaders/" name ".frag"))))
   {:vertex-source (slurp (io/resource (str "cev/shaders/" name ".vert")))
    :fragment-source (slurp (io/resource (str "cev/shaders/" name ".frag")))})
 
-(defn use []
-  (when-let [program @program-atom]
-    (println "Using" program)
-    (GL20/glUseProgram program)))
+(defn use [program]
+  (GL20/glUseProgram program))
 
-(defn cleanup []
-  (when-let [program @program-atom]
-    (println "Deleting" program)
-    (GL20/glDeleteProgram program)))
+(defn delete [program]
+  (GL20/glDeleteProgram program))
 
 (defn load [name]
-  (cleanup)
   (let [shaders (read-shaders name)
         vertex-shader (make-shader
                        (:vertex-source shaders) GL20/GL_VERTEX_SHADER)
         fragment-shader (make-shader
-                         (:fragment-source shaders) GL20/GL_FRAGMENT_SHADER)
-        program (make-program vertex-shader fragment-shader)]
-    (reset! program-atom program)
-    program))
+                         (:fragment-source shaders) GL20/GL_FRAGMENT_SHADER)]
+    (make-program vertex-shader fragment-shader)))
 
 (comment
 
@@ -71,6 +62,5 @@
 
   (def fragment-shader (make-shader fragment-source GL20/GL_FRAGMENT_SHADER))
   (def program (make-program vertex-shader fragment-shader))
-  (reset! program-atom program)
   program
   )
