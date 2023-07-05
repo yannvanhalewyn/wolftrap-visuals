@@ -1,6 +1,6 @@
 (ns cev.window
-  (:gen-class)
-  (:require [cev.shader :as shader])
+  (:require [cev.shader :as shader]
+            [clojure.core.async :as a])
   (:import [org.lwjgl.opengl GL GL11]
            [org.lwjgl.glfw GLFW GLFWErrorCallback GLFWKeyCallback]))
 
@@ -44,6 +44,7 @@
          (proxy [GLFWKeyCallback] []
            (invoke [window key scancode action mods]
              (println "GOT KEY" key scancode action mods)
+             (shader/load "blue")
              (when (and (= key GLFW/GLFW_KEY_ESCAPE)
                         (= action GLFW/GLFW_RELEASE))
                (GLFW/glfwSetWindowShouldClose (:window @globals) true)))))
@@ -104,7 +105,10 @@
 (defn draw
   []
   ;; (draw-triangle)
+
+  (GL11/glClear (bit-or GL11/GL_COLOR_BUFFER_BIT  GL11/GL_DEPTH_BUFFER_BIT))
   (shader/use)
+  (GL11/glEnd)
   )
 
 (defn init
@@ -112,7 +116,15 @@
   (try
     (init-window 800 600 "alpha")
     (init-gl)
-    (shader/load)
+    ;; (shader/load "blue")
+    ;; (shader/load "blue")
+    #_(future (Thread/sleep 5000)
+            (println "Loading shader")
+            (shader/load))
+    #_(a/go
+      (a/<! (a/timeout 5000))
+      (println "Running block")
+      (shader/load "blue"))
     (while (not (GLFW/glfwWindowShouldClose (:window @globals)))
       (update-globals)
       (draw)

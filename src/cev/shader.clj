@@ -1,25 +1,9 @@
 (ns cev.shader
-  (:refer-clojure :exclude [use])
+  (:refer-clojure :exclude [use load])
+  (:require [clojure.java.io :as io])
   (:import [org.lwjgl BufferUtils]
            [org.lwjgl.glfw GLFW]
            [org.lwjgl.opengl GL GL11 GL12 GL13 GL15 GL20 GL30]))
-
-(def vertex-source "
-//the position of the vertex as specified by our renderer
-attribute vec3 Position;
-
-void main() {
-    //pass along the position
-    gl_Position = vec4(Position, 1.0);
-}
-")
-
-(def fragment-source "
-void main() {
-    //pass along the color red
-    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-}
-")
 
 (defn make-shader [source shader-type]
   (let [shader (GL20/glCreateShader shader-type)]
@@ -38,27 +22,55 @@ void main() {
       (throw (Exception. (GL20/glGetProgramInfoLog program 1024))))
     program))
 
-(def vertex-shader
-  (delay (make-shader vertex-source GL20/GL_VERTEX_SHADER)))
-
-(def fragment-shader
-  (delay (make-shader fragment-source GL20/GL_FRAGMENT_SHADER)))
-
-(def program
-  (delay (make-program vertex-shader fragment-shader)))
-
 (defonce program-atom (atom nil))
 
-(defn load []
-  (let [vertex-shader (make-shader vertex-source GL20/GL_VERTEX_SHADER)
-        fragment-shader (make-shader fragment-source GL20/GL_FRAGMENT_SHADER)
-        program (make-program vertex-shader fragment-shader)]
-    (reset! program-atom program)))
+(defn read-shaders [name]
+  (println (slurp (io/resource (str "cev/shaders/" name ".frag"))))
+  {:vertex-source (slurp (io/resource (str "cev/shaders/" name ".vert")))
+   :fragment-source (slurp (io/resource (str "cev/shaders/" name ".frag")))})
 
 (defn use []
   (when-let [program @program-atom]
+    (println "Using" program)
     (GL20/glUseProgram program)))
 
 (defn cleanup []
   (when-let [program @program-atom]
+    (println "Deleting" program)
     (GL20/glDeleteProgram program)))
+
+(defn load [name]
+  (cleanup)
+  (let [shaders (read-shaders name)
+        vertex-shader (make-shader
+                       (:vertex-source shaders) GL20/GL_VERTEX_SHADER)
+        fragment-shader (make-shader
+                         (:fragment-source shaders) GL20/GL_FRAGMENT_SHADER)
+        program (make-program vertex-shader fragment-shader)]
+    (reset! program-atom program)
+    program))
+
+(comment
+
+  (def vertex-source (slurp (io/resource "cev/shaders/simple.vert")))
+
+  (def shader (GL20/glCreateShader GL20/GL_VERTEX_SHADER))
+  (def shader (GL20/glCreateShader GL20/GL_FRAGMENT_SHADER))
+
+
+  (GL20/glShaderSource shader source)
+  (GL20/glCompileShader shader)
+  (when (zero? (GL20/glGetShaderi shader GL20/GL_COMPILE_STATUS))
+    (throw (Exception. (GL20/glGetShaderInfoLog shader 1024))))
+  shader
+
+
+  (def fragment-source (slurp (io/resource "cev/shaders/simple.frag")))
+
+  (def vertex-shader (make-shader vertex-source GL20/GL_VERTEX_SHADER))
+
+  (def fragment-shader (make-shader fragment-source GL20/GL_FRAGMENT_SHADER))
+  (def program (make-program vertex-shader fragment-shader))
+  (reset! program-atom program)
+  program
+  )
