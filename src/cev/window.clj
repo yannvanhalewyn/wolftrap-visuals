@@ -1,5 +1,6 @@
 (ns cev.window
   (:gen-class)
+  (:require [cev.shader :as shader])
   (:import [org.lwjgl.opengl GL GL11]
            [org.lwjgl.glfw GLFW GLFWErrorCallback GLFWKeyCallback]))
 
@@ -42,6 +43,7 @@
          :keyCallback
          (proxy [GLFWKeyCallback] []
            (invoke [window key scancode action mods]
+             (println "GOT KEY" key scancode action mods)
              (when (and (= key GLFW/GLFW_KEY_ESCAPE)
                         (= action GLFW/GLFW_RELEASE))
                (GLFW/glfwSetWindowShouldClose (:window @globals) true)))))
@@ -67,7 +69,7 @@
                 -1.0 1.0)
   (GL11/glMatrixMode GL11/GL_MODELVIEW))
 
-(defn draw
+(defn draw-triangle
   []
   (let [{:keys [width height angle]} @globals
         w2 (/ width 2.0)
@@ -78,13 +80,12 @@
     (GL11/glRotatef angle 0 0 1)
     (GL11/glScalef 2 2 1)
     (GL11/glBegin GL11/GL_TRIANGLES)
-    (do
-      (GL11/glColor3f 1.0 0.0 0.0)
-      (GL11/glVertex2i 100 0)
-      (GL11/glColor3f 0.0 1.0 0.0)
-      (GL11/glVertex2i -50 86.6)
-      (GL11/glColor3f 0.0 0.0 1.0)
-      (GL11/glVertex2i -50 -86.6))
+    (GL11/glColor3f 1.0 0.0 0.0)
+    (GL11/glVertex2i 100 0)
+    (GL11/glColor3f 0.0 1.0 0.0)
+    (GL11/glVertex2i -50 86.6)
+    (GL11/glColor3f 0.0 0.0 1.0)
+    (GL11/glVertex2i -50 -86.6)
     (GL11/glEnd)))
 
 (defn update-globals
@@ -100,20 +101,24 @@
            :angle next-angle
            :last-time cur-time)))
 
-(defn main-loop
+(defn draw
   []
-  (while (not (GLFW/glfwWindowShouldClose (:window @globals)))
-    (update-globals)
-    (draw)
-    (GLFW/glfwSwapBuffers (:window @globals))
-    (GLFW/glfwPollEvents)))
+  ;; (draw-triangle)
+  (shader/use)
+  )
 
 (defn init
   []
   (try
     (init-window 800 600 "alpha")
     (init-gl)
-    (main-loop)
+    (shader/load)
+    (while (not (GLFW/glfwWindowShouldClose (:window @globals)))
+      (update-globals)
+      (draw)
+      (GLFW/glfwSwapBuffers (:window @globals))
+      (GLFW/glfwPollEvents))
+    (shader/cleanup)
     (.free (:errorCallback @globals))
     (.free (:keyCallback @globals))
     (GLFW/glfwDestroyWindow (:window @globals))
