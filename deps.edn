@@ -10,4 +10,6 @@
         org.lwjgl/lwjgl-glfw {:mvn/version "3.3.2"}
         org.lwjgl/lwjgl-glfw$natives-macos {:mvn/version "3.3.2"}}
  :aliases
- {:run {:jvm-opts ["-XstartOnFirstThread"]}}}
+ {:dev {:jvm-opts ["-XstartOnFirstThread"]
+        :extra-deps {nrepl/nrepl {:mvn/version "1.0.0"}
+                     cider/cider-nrepl {:mvn/version "0.30.0"}}}}}
