@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [run!])
   (:require
    [cev.shader :as shader]
-   [cev.vertex-array :as vertex-array]
+   [cev.mesh :as mesh]
    [cev.window :as window])
   (:import
    [org.lwjgl.glfw GLFW]
@@ -20,7 +20,7 @@
   (GL11/glClearColor 0.0 0.0 0.0 0.0)
   (GL11/glClear (bit-or GL11/GL_COLOR_BUFFER_BIT  GL11/GL_DEPTH_BUFFER_BIT))
   (shader/use program)
-  (vertex-array/draw-mesh mesh)
+  (mesh/draw mesh)
   (GLFW/glfwSwapBuffers window)
   (GLFW/glfwPollEvents))
 
@@ -33,9 +33,13 @@
       (GLFW/glfwSetWindowShouldClose window true)
 
       GLFW/GLFW_KEY_R
-      (when-let [new-program (shader/load "triangle")]
-        (shader/delete (:program @state))
-        (swap! state assoc :program new-program))
+      (when-let [program (shader/load "triangle")]
+        (let [mesh (mesh/create program vertices indices)]
+          (shader/delete (:program @state))
+          (mesh/delete (:mesh @state))
+          (swap! state assoc
+                 :mesh mesh
+                 :program program)))
 
       nil)))
 
@@ -48,7 +52,7 @@
                    ::window/title "let there be triangles"
                    ::window/key-callback key-callback})
           program (shader/load "triangle")
-          mesh (vertex-array/create-mesh program vertices indices)]
+          mesh (mesh/create program vertices indices)]
 
 
       (swap! state assoc
