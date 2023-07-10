@@ -1,12 +1,13 @@
 (ns cev.gl-context
   (:refer-clojure :exclude [run!])
   (:require
-   [cev.shader :as shader]
+   [cev.db :as db]
    [cev.mesh :as mesh]
+   [cev.shader :as shader]
    [cev.window :as window])
   (:import
    [org.lwjgl.glfw GLFW]
-   [org.lwjgl.opengl GL11 GL30]))
+   [org.lwjgl.opengl GL11]))
 
 (def vertices
   [-1.0  1.0
@@ -18,14 +19,16 @@
 
 (def indices [0 1 2 3 4 5])
 
-(defonce state (atom {}))
-
-(defn- draw! [{:keys [window program mesh]}]
-  (let [[width height] (window/get-size window)]
+(defn- draw! []
+  (let [window (db/get :window)
+        program (db/get :program)
+        mesh (db/get :mesh)
+        [width height] (window/get-size window)]
     (GL11/glClearColor 0.0 0.0 0.0 0.0)
     (GL11/glClear (bit-or GL11/GL_COLOR_BUFFER_BIT  GL11/GL_DEPTH_BUFFER_BIT))
     (shader/use program)
     (shader/uniform-2f program "resolution" width height)
+    (shader/uniform-1f program "slider" (float (/ (:value (db/get :midi)) 127)))
     (mesh/draw mesh)
     (GLFW/glfwSwapBuffers window)
     (GLFW/glfwPollEvents)))
@@ -41,11 +44,9 @@
       GLFW/GLFW_KEY_R
       (when-let [program (shader/load "triangle")]
         (let [mesh (mesh/create program vertices indices)]
-          (shader/delete (:program @state))
-          (mesh/delete (:mesh @state))
-          (swap! state assoc
-                 :mesh mesh
-                 :program program)))
+          (shader/delete (db/get :program))
+          (mesh/delete (db/get :mesh))
+          (db/set-mesh! program mesh)))
 
       nil)))
 
@@ -60,15 +61,12 @@
           program (shader/load "triangle")
           mesh (mesh/create program vertices indices)]
 
-
-      (swap! state assoc
-             :window window
-             :program program
-             :mesh mesh)
+      (db/set-window! window)
+      (db/set-mesh! program mesh)
 
       (GL11/glEnable GL11/GL_DEPTH_TEST)
       (while (not (GLFW/glfwWindowShouldClose window))
-        (draw! @state))
+        (draw!))
 
       (shader/delete program)
       (GLFW/glfwDestroyWindow window))

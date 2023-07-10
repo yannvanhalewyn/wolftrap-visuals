@@ -1,12 +1,13 @@
 (ns cev.main
   (:require
-   [clojure.java.io :as io]
+   [cev.db :as db]
    [cev.gl-context :as gl-context]
    [cev.midi :as midi]
+   [clojure.java.io :as io]
    [nrepl.server :as nrepl]))
 
 (defn- handle-midi! [msg]
-  (println msg))
+  (db/handle-midi! msg))
 
 (defn -main [& _args]
   (spit ".nrepl-port" 7888)

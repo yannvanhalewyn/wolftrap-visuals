@@ -47,6 +47,10 @@
   (when-let [loc (uniform-location program name)]
     (GL20/glUniform2f loc x y)))
 
+(defn uniform-1f [program name x]
+  (when-let [loc (uniform-location program name)]
+    (GL20/glUniform1f loc x)))
+
 (defn delete [program]
   (println "Deleting program" program)
   (GL20/glDeleteProgram program))
