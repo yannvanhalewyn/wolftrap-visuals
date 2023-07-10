@@ -29,6 +29,7 @@
     (shader/use program)
     (shader/uniform-2f program "resolution" width height)
     (shader/uniform-1f program "slider" (float (/ (:value (db/get :midi)) 127)))
+    (shader/uniform-1f program "time" (GLFW/glfwGetTime))
     (mesh/draw mesh)
     (GLFW/glfwSwapBuffers window)
     (GLFW/glfwPollEvents)))
