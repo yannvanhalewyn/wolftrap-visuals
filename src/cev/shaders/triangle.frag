@@ -2,14 +2,15 @@
 
 in mediump vec2 UV;
 uniform vec2 resolution;
-uniform float slider;
 uniform float time;
+
+uniform float iterations;
+uniform float complexity;
+uniform float brightness;
+
 out mediump vec4 fragColor;
 
-float iterations = 3.0;
-float complexity = 8.3;
 float speed = .5;
-float brightness = .1;
 
 void main(void)
 {
@@ -20,14 +21,14 @@ void main(void)
   vec3 tint = vec3(141.0 / 256., 22.0 / 256.0, 196.0 / 256.0);
   vec3 finalColor = vec3(0.0);
 
-  for (float i = 0.0; i < iterations; i++) {
+  for (float i = 0.0; i < iterations * 20.0; i++) {
     uv = fract(uv * 2.) - 0.5;
     float d = length(uv) * exp(-length(uv0) * 2.0);
 
     vec3 col = tint * exp(-length(uv0) * 0.4);
 
 
-    d = sin(d * complexity + time * speed)/12.0;
+    d = sin(d * complexity * 10.0 + time * speed)/12.0;
     //d = abs(d);
     d = brightness / d;
     finalColor += col * d;

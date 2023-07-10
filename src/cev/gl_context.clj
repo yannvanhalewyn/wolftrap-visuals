@@ -3,6 +3,7 @@
   (:require
    [cev.db :as db]
    [cev.mesh :as mesh]
+   [cev.midi :as midi]
    [cev.shader :as shader]
    [cev.window :as window])
   (:import
@@ -28,7 +29,9 @@
     (GL11/glClear (bit-or GL11/GL_COLOR_BUFFER_BIT  GL11/GL_DEPTH_BUFFER_BIT))
     (shader/use program)
     (shader/uniform-2f program "resolution" width height)
-    (shader/uniform-1f program "slider" (float (/ (:value (db/get :midi)) 127)))
+    (shader/uniform-1f program "iterations" (midi/normalize (db/midi-cc 72)))
+    (shader/uniform-1f program "complexity" (midi/normalize (db/midi-cc 79)))
+    (shader/uniform-1f program "brightness" (midi/normalize (db/midi-cc 91)))
     (shader/uniform-1f program "time" (GLFW/glfwGetTime))
     (mesh/draw mesh)
     (GLFW/glfwSwapBuffers window)

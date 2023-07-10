@@ -15,6 +15,15 @@
    :control (.getData1 message)
    :value (.getData2 message)})
 
+(defn normalize
+  ([value]
+   (float (/ value 127)))
+  ([value min max]
+   (-> (normalize value)
+       (* (- max min))
+       (+ min))))
+
+
 (defn add-listener! [callback]
   (let [receiver (proxy [Receiver] []
                    (close [] nil)
