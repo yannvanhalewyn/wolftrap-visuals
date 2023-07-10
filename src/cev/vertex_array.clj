@@ -44,7 +44,7 @@
   1. Generates a VBO and stores the position data it"
   [program positions indices]
   (let [vao (gen-vao)]
-    (store-data program "point" 3 positions)
+    (store-data program "point" 2 positions)
     (bind-indices indices)
     (GL30/glBindVertexArray 0)
     {:vao vao :length (count indices)}))
