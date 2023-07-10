@@ -9,5 +9,8 @@ void main(void)
   vec2 uv = UV;
   uv.x *= resolution.x / resolution.y;
   float d = length(uv);
-  fragColor = vec4(d, d, 0.0, 1.0);
+  d -= 0.5;
+  d = abs(d);
+  d = step(0.1, d);
+  fragColor = vec4(d, d, d, 1.0);
 }
