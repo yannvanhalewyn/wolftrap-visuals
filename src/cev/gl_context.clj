@@ -21,19 +21,21 @@
 (defonce state (atom {}))
 
 (defn- draw! [{:keys [window program mesh]}]
-  (GL11/glClearColor 0.0 0.0 0.0 0.0)
-  (GL11/glClear (bit-or GL11/GL_COLOR_BUFFER_BIT  GL11/GL_DEPTH_BUFFER_BIT))
-  (shader/use program)
-  (mesh/draw mesh)
-  (GLFW/glfwSwapBuffers window)
-  (GLFW/glfwPollEvents))
+  (let [[width height] (window/get-size window)]
+    (GL11/glClearColor 0.0 0.0 0.0 0.0)
+    (GL11/glClear (bit-or GL11/GL_COLOR_BUFFER_BIT  GL11/GL_DEPTH_BUFFER_BIT))
+    (shader/use program)
+    (shader/uniform-2f program "resolution" width height)
+    (mesh/draw mesh)
+    (GLFW/glfwSwapBuffers window)
+    (GLFW/glfwPollEvents)))
 
 (defn- key-callback [window key scancode action mods]
   (println "key-event" :key key :scancode scancode :action action :mods mods)
 
   (when (= action GLFW/GLFW_RELEASE)
     (condp = key
-      GLFW/GLFW_KEY_ESCAPE
+      GLFW/GLFW_KEY_Q
       (GLFW/glfwSetWindowShouldClose window true)
 
       GLFW/GLFW_KEY_R
