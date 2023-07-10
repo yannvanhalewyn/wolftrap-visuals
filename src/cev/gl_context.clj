@@ -8,11 +8,15 @@
    [org.lwjgl.glfw GLFW]
    [org.lwjgl.opengl GL11 GL30]))
 
-(def vertices (float-array [-0.5 -0.5
-                            0.5  -0.5
-                            0.0   0.5]))
+(def vertices
+  [-1.0  1.0
+    1.0  1.0
+   -1.0 -1.0
+    1.0  1.0
+   -1.0 -1.0
+    1.0 -1.0])
 
-(def indices (int-array [0 1 2]))
+(def indices [0 1 2 3 4 5])
 
 (defonce state (atom {}))
 

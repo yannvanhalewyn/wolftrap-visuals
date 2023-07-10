@@ -3,15 +3,18 @@
            [org.lwjgl.glfw GLFW]
            [org.lwjgl.opengl GL GL11 GL12 GL13 GL15 GL20 GL30]))
 
-(defn buffer-maker [create-fn]
+(defn buffer-maker [create]
   (fn make-buffer--x [data]
-     (let [buffer (create-fn (count data))]
+     (let [buffer (create (count data))]
        (.put buffer data)
        (.flip buffer)
        buffer)))
 
-(def make-float-buffer (buffer-maker #(BufferUtils/createFloatBuffer %)))
-(def make-int-buffer (buffer-maker #(BufferUtils/createIntBuffer %)))
+(def make-float-buffer
+  (comp (buffer-maker #(BufferUtils/createFloatBuffer %)) float-array))
+
+(def make-int-buffer
+  (comp (buffer-maker #(BufferUtils/createIntBuffer %)) int-array))
 
 (defn- store-data [program attr-name dimensions data]
   (let [vbo (GL15/glGenBuffers)
