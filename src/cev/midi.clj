@@ -17,12 +17,13 @@
 
 (defn normalize
   ([value]
-   (float (/ value 127)))
+   (if value
+     (float (or (/ value 127) 0))
+     (float 0)))
   ([value min max]
    (-> (normalize value)
        (* (- max min))
        (+ min))))
-
 
 (defn add-listener! [callback]
   (let [receiver (proxy [Receiver] []
