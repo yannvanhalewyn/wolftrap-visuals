@@ -1,23 +1,19 @@
 (ns cev.window
-  (:require [cev.shader :as shader]
-            [cev.vertex-array :as vertex-array]
-            [clojure.core.async :as a])
   (:import [org.lwjgl.opengl GL GL11]
            [org.lwjgl.glfw GLFW GLFWErrorCallback GLFWKeyCallback]))
 
 (defn set-key-callback [window]
+  (println "ESCAPE KEY=" GLFW/GLFW_KEY_ESCAPE)
+  (println "Release code=" GLFW/GLFW_KEY_ESCAPE GLFW/GLFW_RELEASE)
   (GLFW/glfwSetKeyCallback
    window
    ;; Technically this was '.free'd upon exit, not sure if necessary.
    (proxy [GLFWKeyCallback] []
      (invoke [window key scancode action mods]
        (println "GOT KEY" key scancode action mods)
-       (shader/load "blue")
        (when (and (= key GLFW/GLFW_KEY_ESCAPE)
                   (= action GLFW/GLFW_RELEASE))
          (GLFW/glfwSetWindowShouldClose window true))))))
-
-(defonce cleanup (atom []))
 
 (defn init
   [width height title]
@@ -27,9 +23,17 @@
   (when-not (GLFW/glfwInit)
     (throw (IllegalStateException. "Unable to initialize GLFW")))
 
+  ;; From example code
   (GLFW/glfwDefaultWindowHints)
   (GLFW/glfwWindowHint GLFW/GLFW_VISIBLE GLFW/GLFW_FALSE)
   (GLFW/glfwWindowHint GLFW/GLFW_RESIZABLE GLFW/GLFW_TRUE)
+
+  ;; From somewhere else
+  (GLFW/glfwWindowHint GLFW/GLFW_OPENGL_PROFILE GLFW/GLFW_OPENGL_CORE_PROFILE)
+  (GLFW/glfwWindowHint GLFW/GLFW_OPENGL_FORWARD_COMPAT GLFW/GLFW_TRUE)
+  (GLFW/glfwWindowHint GLFW/GLFW_CONTEXT_VERSION_MAJOR 4)
+  (GLFW/glfwWindowHint GLFW/GLFW_CONTEXT_VERSION_MINOR 1)
+
   (let [window (GLFW/glfwCreateWindow width height title 0 0)]
     (when-not window
       (throw (RuntimeException. "Failed to create the GLFW window")))
@@ -47,18 +51,10 @@
 
     (GL/createCapabilities)
     (println "OpenGL version:" (GL11/glGetString GL11/GL_VERSION))
-    (GL11/glClearColor 0.0 0.0 0.0 0.0)
-    (GL11/glMatrixMode GL11/GL_PROJECTION)
-    (GL11/glOrtho 0.0 width
+    #_(GL11/glMatrixMode GL11/GL_PROJECTION)
+    #_(GL11/glOrtho 0.0 width
                   0.0 height
                   -1.0 1.0)
-    (GL11/glMatrixMode GL11/GL_MODELVIEW)
+    #_(GL11/glMatrixMode GL11/GL_MODELVIEW)
 
-    window))
-
-(defn init2 []
-  (GLFW/glfwInit)
-  (let [window (GLFW/glfwCreateWindow 800 600 "My Window" 0 0)]
-    (GLFW/glfwMakeContextCurrent window)
-    (GL/createCapabilities)
     window))

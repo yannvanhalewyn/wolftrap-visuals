@@ -1,3 +1,3 @@
 ``` sh
-clj -M:dev -m cev.main
+clj -M:lwjgl:dev:local-dev -m cev.main
 ```

@@ -4,7 +4,7 @@
    [cev.gl-context :as gl-context]
    [nrepl.server :as nrepl]))
 
-(defn -main [& args]
+(defn -main [& _args]
   (spit ".nrepl-port" 7888)
   (nrepl/start-server :port 7888)
   (gl-context/run! 800 600)

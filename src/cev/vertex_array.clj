@@ -13,42 +13,46 @@
 (def make-float-buffer (buffer-maker #(BufferUtils/createFloatBuffer %)))
 (def make-int-buffer (buffer-maker #(BufferUtils/createIntBuffer %)))
 
-(defn draw []
-  (GL11/glDrawElements GL11/GL_TRIANGLES 3 GL11/GL_UNSIGNED_INT 0))
-
-(defn init [program]
-  (let [vertices (float-array [ 0.5  0.5 0.0 1.0 1.0
-                               -0.5  0.5 0.0 0.0 1.0
-                               -0.5 -0.5 0.0 0.0 0.0])
-        indices (int-array [0 1 2])
-
-        vao (GL30/glGenVertexArrays)
-        vbo (GL15/glGenBuffers)
-
-        vertices-buffer (make-float-buffer vertices)
-        indices-buffer (make-int-buffer indices)]
-    ;; (sc.api/spy )
-    (GL30/glBindVertexArray vao)
+(defn- store-data [program attr-name dimensions data]
+  (let [vbo (GL15/glGenBuffers)
+        buffer (make-float-buffer data)
+        attr-location (GL20/glGetAttribLocation program attr-name)]
+    ;; GL_ARRAY_BUFFER is for Vertex Attributes
     (GL15/glBindBuffer GL15/GL_ARRAY_BUFFER vbo)
+    (GL15/glBufferData GL15/GL_ARRAY_BUFFER buffer GL15/GL_STATIC_DRAW)
 
-    (GL15/glBufferData
-     GL15/GL_ARRAY_BUFFER vertices-buffer GL15/GL_STATIC_DRAW)
+    (println "ATTR" attr-name attr-location)
+    (GL20/glVertexAttribPointer attr-location dimensions GL11/GL_FLOAT false 0 0)
+    (GL20/glEnableVertexAttribArray attr-location)
+    ;; Unload VBO when done
+    (GL15/glBindBuffer GL15/GL_ARRAY_BUFFER 0)))
 
-    (let [idx (GL15/glGenBuffers)]
-      (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER idx))
+(defn- bind-indices [data]
+  (let [vbo (GL15/glGenBuffers)
+        buffer (make-int-buffer data)]
+    ;; GL_ELEMENT_ARRAY_BUFFER is for Vertex array indices
+    (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER vbo)
+    (GL15/glBufferData GL15/GL_ELEMENT_ARRAY_BUFFER  buffer GL15/GL_STATIC_DRAW)))
 
-    (GL15/glBufferData
-     GL15/GL_ELEMENT_ARRAY_BUFFER indices-buffer GL15/GL_STATIC_DRAW)
+(defn- gen-vao []
+  (let [vao (GL30/glGenVertexArrays)]
+    (GL30/glBindVertexArray vao)
+    vao))
 
-    (GL20/glVertexAttribPointer (GL20/glGetAttribLocation program "point"   ) 3 GL11/GL_FLOAT false (* 5 Float/BYTES) (* 0 Float/BYTES))
-    (GL20/glVertexAttribPointer (GL20/glGetAttribLocation program "texcoord") 2 GL11/GL_FLOAT false (* 5 Float/BYTES) (* 3 Float/BYTES))
-    (GL20/glEnableVertexAttribArray 0)
-    (GL20/glEnableVertexAttribArray 1)
+(defn create-mesh
+  "Creates and returns a VAO for the mesh.
+  1. Generates a VBO and stores the position data it"
+  [program positions indices]
+  (let [vao (gen-vao)]
+    (store-data program "point" 3 positions)
+    (bind-indices indices)
+    (GL30/glBindVertexArray 0)
+    {:vao vao :length (count indices)}))
 
-    (GL20/glUseProgram program)
-
-    (GL11/glEnable GL11/GL_DEPTH_TEST)
-    ))
+(defn draw-mesh [mesh]
+  (GL30/glBindVertexArray (:vao mesh))
+  (GL11/glDrawElements GL11/GL_TRIANGLES (:length mesh) GL11/GL_UNSIGNED_INT 0)
+  (GL30/glBindVertexArray 0))
 
 (comment
   (defn cleanup []
@@ -70,4 +74,7 @@
     (GL20/glDeleteProgram program)
 
     (GLFW/glfwDestroyWindow window)
-    (GLFW/glfwTerminate)))
+    (GLFW/glfwTerminate))
+
+
+  )
