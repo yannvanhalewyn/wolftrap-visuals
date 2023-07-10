@@ -7,18 +7,18 @@
   (let [shader (GL20/glCreateShader shader-type)]
     (GL20/glShaderSource shader source)
     (GL20/glCompileShader shader)
-    (when (zero? (GL20/glGetShaderi shader GL20/GL_COMPILE_STATUS))
-      (throw (Exception. (GL20/glGetShaderInfoLog shader 1024))))
-    shader))
+    (if (zero? (GL20/glGetShaderi shader GL20/GL_COMPILE_STATUS))
+      (println "ERROR" (GL20/glGetShaderInfoLog shader 1024))
+      shader)))
 
 (defn make-program [vertex-shader fragment-shader]
   (let [program (GL20/glCreateProgram)]
     (GL20/glAttachShader program vertex-shader)
     (GL20/glAttachShader program fragment-shader)
     (GL20/glLinkProgram program)
-    (when (zero? (GL20/glGetProgrami program GL20/GL_LINK_STATUS))
-      (throw (Exception. (GL20/glGetProgramInfoLog program 1024))))
-    program))
+    (if (zero? (GL20/glGetProgrami program GL20/GL_LINK_STATUS))
+      (println "ERROR" (GL20/glGetProgramInfoLog program 1024))
+      program)))
 
 (defn read-shaders [name]
   {:vertex-source (slurp (io/resource (str "cev/shaders/" name ".vert")))
@@ -37,4 +37,5 @@
   (GL20/glUseProgram program))
 
 (defn delete [program]
+  (println "Deleting program" program)
   (GL20/glDeleteProgram program))

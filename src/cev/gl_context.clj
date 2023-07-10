@@ -33,7 +33,7 @@
       (GLFW/glfwSetWindowShouldClose window true)
 
       GLFW/GLFW_KEY_R
-      (let [new-program (shader/load "triangle")]
+      (when-let [new-program (shader/load "triangle")]
         (shader/delete (:program @state))
         (swap! state assoc :program new-program))
 
