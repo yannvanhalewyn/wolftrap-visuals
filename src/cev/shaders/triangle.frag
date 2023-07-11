@@ -21,7 +21,7 @@ void main(void)
   vec3 tint = vec3(141.0 / 256., 22.0 / 256.0, 196.0 / 256.0);
   vec3 finalColor = vec3(0.0);
 
-  for (float i = 0.0; i < iterations * 20.0; i++) {
+  for (float i = 0.0; i < iterations; i++) {
     uv = fract(uv * 2.) - 0.5;
     float d = length(uv) * exp(-length(uv0) * 2.0);
 
