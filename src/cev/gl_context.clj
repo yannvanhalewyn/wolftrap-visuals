@@ -46,7 +46,7 @@
       (GLFW/glfwSetWindowShouldClose window true)
 
       GLFW/GLFW_KEY_R
-      (when-let [program (shader/load "triangle")]
+      (when-let [program (shader/load "canvas" "distance_fractal")]
         (let [mesh (mesh/create program vertices indices)]
           (shader/delete (db/get :program))
           (mesh/delete (db/get :mesh))
@@ -60,9 +60,9 @@
     (let [window (window/init
                   {::window/width width
                    ::window/height height
-                   ::window/title "let there be triangles"
+                   ::window/title "Wolftrap Visuals"
                    ::window/key-callback key-callback})
-          program (shader/load "triangle")
+          program (shader/load "canvas" "distance_fractal")
           mesh (mesh/create program vertices indices)]
 
       (db/set-window! window)
