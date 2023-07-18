@@ -44,23 +44,26 @@
       (GLFW/glfwSetWindowShouldClose window true)
 
       GLFW/GLFW_KEY_R
-      (when-let [program (shader/load "canvas" "distance_fractal")]
-        (let [mesh (mesh/create program vertices indices)]
-          (shader/delete (db/get :program))
-          (mesh/delete (db/get :mesh))
-          (db/set-mesh! program mesh)))
+      (let [[vertex-shader fragment-shader] (db/current-shaders)]
+        (when-let [program (shader/load vertex-shader fragment-shader)]
+          (let [mesh (mesh/create program vertices indices)]
+            (shader/delete (db/get :program))
+            (mesh/delete (db/get :mesh))
+            (db/set-mesh! program mesh))))
 
       nil)))
 
 (defn run!
   [width height]
   (try
+    (db/set-shaders! "canvas" "distance_fractal")
     (let [window (window/init
                   {::window/width width
                    ::window/height height
                    ::window/title "Wolftrap Visuals"
                    ::window/key-callback key-callback})
-          program (shader/load "canvas" "distance_fractal")
+          [vertex-shader fragment-shader] (db/current-shaders)
+          program (shader/load vertex-shader fragment-shader)
           mesh (mesh/create program vertices indices)]
 
       (db/set-window! window)
