@@ -9,11 +9,11 @@
 (defn set-window! [window]
   (swap! db assoc :window window))
 
-(defn set-mesh! [program mesh]
-  (swap! db assoc :program program :mesh mesh))
-
 (defn add-entity! [entity]
-  (swap! db update :db/entities conj entity))
+  (swap! db assoc-in [:db/entities (:entity/id entity)] entity))
+
+(defn entities []
+  (vals (:db/entities @db)))
 
 (defn handle-midi! [msg]
   (println "MIDI" msg)
