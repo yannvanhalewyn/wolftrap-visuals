@@ -1,7 +1,8 @@
 {:deps {org.clojure/clojure {:mvn/version "1.11.1"}}
  :aliases
  {:dev
-  {:extra-deps
+  {:extra-paths ["dev"]
+   :extra-deps
    {nrepl/nrepl {:mvn/version "1.0.0"}
     cider/cider-nrepl {:mvn/version "0.30.0"}}}
   :thing

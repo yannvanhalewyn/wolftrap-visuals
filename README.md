@@ -1,3 +1,5 @@
+Running and starting an embedded nREPL:
+
 ``` sh
-clj -M:lwjgl:dev:local-dev -m cev.main
+bb run
 ```

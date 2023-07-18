@@ -1,0 +1,2 @@
+{:tasks
+ {run (clojure "-M:lwjgl:dev:local-dev -m cev.main")}}
