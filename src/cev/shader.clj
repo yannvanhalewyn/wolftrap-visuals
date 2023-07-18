@@ -21,16 +21,12 @@
       (println (GL20/glGetProgramInfoLog program 1024))
       program)))
 
-(defn read-shaders [vertex-name fragment-name]
-  {:vertex-source (slurp (io/resource (str "cev/shaders/" vertex-name ".vert")))
-   :fragment-source (slurp (io/resource (str "cev/shaders/" fragment-name ".frag")))})
+(defn resource-file [shader-name]
+  (io/resource (str "cev/shaders/" shader-name)))
 
-(defn load [vertex-name fragment-name]
-  (let [shaders (read-shaders vertex-name fragment-name)
-        vertex-shader (make-shader
-                       (:vertex-source shaders) GL20/GL_VERTEX_SHADER)
-        fragment-shader (make-shader
-                         (:fragment-source shaders) GL20/GL_FRAGMENT_SHADER)]
+(defn load [{:keys [:glsl/vertex-source :glsl/fragment-source]}]
+  (let [vertex-shader (make-shader (slurp vertex-source) GL20/GL_VERTEX_SHADER)
+        fragment-shader (make-shader (slurp fragment-source) GL20/GL_FRAGMENT_SHADER)]
     (when (and vertex-shader fragment-shader)
       (println "Loaded shaders, making program...")
       (make-program vertex-shader fragment-shader))))

@@ -12,13 +12,8 @@
 (defn set-mesh! [program mesh]
   (swap! db assoc :program program :mesh mesh))
 
-(defn set-shaders! [vertex-shader fragment-shader]
-  (swap! db assoc
-         :vertex-shader vertex-shader
-         :fragment-shader fragment-shader))
-
-(defn current-shaders []
-  (map @db [:vertex-shader :fragment-shader]))
+(defn add-entity! [entity]
+  (swap! db update :db/entities conj entity))
 
 (defn handle-midi! [msg]
   (println "MIDI" msg)
