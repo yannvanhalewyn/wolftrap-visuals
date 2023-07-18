@@ -11,14 +11,12 @@
    [org.lwjgl.opengl GL11]))
 
 (def vertices
-  [-1.0  1.0
+  [-1.0 -1.0
+   -1.0  1.0
     1.0  1.0
-   -1.0 -1.0
-    1.0  1.0
-   -1.0 -1.0
     1.0 -1.0])
 
-(def indices [0 1 2 3 4 5])
+(def indices [0 1 2 0 2 3])
 
 (defn- draw! []
   (let [window (db/get :window)
