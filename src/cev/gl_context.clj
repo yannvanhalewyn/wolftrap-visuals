@@ -10,13 +10,26 @@
    [org.lwjgl.glfw GLFW]
    [org.lwjgl.opengl GL11]))
 
-(def vertices
-  [-1.0 -1.0
-   -1.0  1.0
-    1.0  1.0
-    1.0 -1.0])
+;; (def vertices
+;;   [-1.0 -1.0
+;;    -1.0  1.0
+;;     1.0  1.0
+;;     1.0 -1.0])
 
-(def indices [0 1 2 0 2 3])
+;; (def indices [0 1 2 0 2 3])
+
+(def vertices
+  [-1.0 -1.0 0.0 1.0 0.0 0.0
+    0.0  1.0 0.0 0.0 1.0 0.0
+    1.0 -1.0 0.0 0.0 0.0 1.0])
+
+(def indices [0 1 2])
+
+(def glsl-attrs
+  [{:glsl/name "vpos"
+    :glsl/dimensions 3}
+   {:glsl/name "vcol"
+    :glsl/dimensions 3}])
 
 (defn- draw! []
   (let [window (db/get :window)
@@ -46,7 +59,7 @@
       GLFW/GLFW_KEY_R
       (let [[vertex-shader fragment-shader] (db/current-shaders)]
         (when-let [program (shader/load vertex-shader fragment-shader)]
-          (let [mesh (mesh/create program vertices indices)]
+          (let [mesh (mesh/create program vertices indices glsl-attrs)]
             (shader/delete (db/get :program))
             (mesh/delete (db/get :mesh))
             (db/set-mesh! program mesh))))
@@ -56,7 +69,7 @@
 (defn run!
   [width height]
   (try
-    (db/set-shaders! "canvas" "distance_fractal")
+    (db/set-shaders! "playground" "playground")
     (let [window (window/init
                   {::window/width width
                    ::window/height height
@@ -64,7 +77,7 @@
                    ::window/key-callback key-callback})
           [vertex-shader fragment-shader] (db/current-shaders)
           program (shader/load vertex-shader fragment-shader)
-          mesh (mesh/create program vertices indices)]
+          mesh (mesh/create program vertices indices glsl-attrs)]
 
       (db/set-window! window)
       (db/set-mesh! program mesh)

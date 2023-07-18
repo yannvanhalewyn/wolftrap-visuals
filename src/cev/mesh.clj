@@ -1,7 +1,6 @@
 (ns cev.mesh
   (:import [org.lwjgl BufferUtils]
-           [org.lwjgl.glfw GLFW]
-           [org.lwjgl.opengl GL GL11 GL12 GL13 GL15 GL20 GL30]))
+           [org.lwjgl.opengl GL11 GL15 GL20 GL30]))
 
 (defn buffer-maker [create]
   (fn make-buffer--x [data]
@@ -16,17 +15,29 @@
 (def make-int-buffer
   (comp (buffer-maker #(BufferUtils/createIntBuffer %)) int-array))
 
-(defn- store-data [program attr-name dimensions data]
+(defn- setup-attrib-pointers! [program attrs]
+  (let [stride (* (apply + (map :glsl/dimensions attrs))
+                  Float/BYTES)]
+    (loop [[attr & others] attrs
+           offset 0]
+      (let [dimensions (:glsl/dimensions attr)
+            attr-location (GL20/glGetAttribLocation program (:glsl/name attr))]
+        (when (= attr-location -1)
+          (println "ERROR: could not find attribute " (:glsl/name attr)))
+        (GL20/glVertexAttribPointer
+         attr-location dimensions GL11/GL_FLOAT false stride offset)
+        (GL20/glEnableVertexAttribArray attr-location)
+        (when (seq others)
+          (recur others (* dimensions Float/BYTES)))))))
+
+(defn- store-data [program vertices glsl-attrs]
   (let [vbo (GL15/glGenBuffers)
-        buffer (make-float-buffer data)
-        attr-location (GL20/glGetAttribLocation program attr-name)]
+        buffer (make-float-buffer vertices)]
     ;; GL_ARRAY_BUFFER is for Vertex Attributes
     (GL15/glBindBuffer GL15/GL_ARRAY_BUFFER vbo)
     (GL15/glBufferData GL15/GL_ARRAY_BUFFER buffer GL15/GL_STATIC_DRAW)
+    (setup-attrib-pointers! program glsl-attrs)
 
-    (println "ATTR" attr-name attr-location)
-    (GL20/glVertexAttribPointer attr-location dimensions GL11/GL_FLOAT false 0 0)
-    (GL20/glEnableVertexAttribArray attr-location)
     ;; Unload VBO when done
     (GL15/glBindBuffer GL15/GL_ARRAY_BUFFER 0)
     vbo))
@@ -51,9 +62,9 @@
   3. Generates an index buffer and uploads the indices
 
   Returns an object with the :vao :vbo :idx and :vertex-count"
-  [program vertices indices]
+  [program vertices indices glsl-attrs]
   (let [vao (gen-vao)
-        vbo (store-data program "point" 2 vertices)
+        vbo (store-data program vertices glsl-attrs)
         idx (bind-indices indices)]
     (GL30/glBindVertexArray 0)
     {:vao vao
