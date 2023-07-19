@@ -14,6 +14,8 @@
 
 (defn re-compile! [entity]
   (when-let [new-entity (compile! entity)]
-    (shader/delete (:entity/program entity))
-    (mesh/delete (:entity/mesh entity))
+    (when-let [program (:entity/program entity)]
+      (shader/delete program))
+    (when-let [mesh (:entity/mesh entity)]
+      (mesh/delete mesh))
     new-entity))
