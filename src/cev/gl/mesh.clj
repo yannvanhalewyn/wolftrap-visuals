@@ -1,7 +1,7 @@
 (ns cev.gl.mesh
   (:import
    [org.lwjgl BufferUtils]
-   [org.lwjgl.opengl GL11 GL15 GL20 GL30]))
+   [org.lwjgl.opengl GL11 GL12 GL13 GL15 GL20 GL30]))
 
 (defn buffer-maker [create]
   (fn make-buffer--x [data]
@@ -53,6 +53,18 @@
     (GL15/glBufferData GL15/GL_ELEMENT_ARRAY_BUFFER  buffer GL15/GL_STATIC_DRAW)
     vbo))
 
+(defn- load-texture [program pixels attr-name]
+  (let [tex (GL11/glGenTextures)
+        pixel-buffer (make-float-buffer pixels)]
+    (GL13/glActiveTexture GL13/GL_TEXTURE0)
+    (GL11/glBindTexture GL11/GL_TEXTURE_2D tex)
+    (GL20/glUniform1i (GL20/glGetUniformLocation program attr-name) 0)
+    (GL11/glTexImage2D GL11/GL_TEXTURE_2D 0 GL11/GL_RGB 2 2 0 GL12/GL_BGR GL11/GL_FLOAT pixel-buffer)
+    (GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_WRAP_S GL11/GL_REPEAT)
+    (GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_MIN_FILTER GL11/GL_NEAREST)
+    (GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_MAG_FILTER GL11/GL_NEAREST)
+    (GL30/glGenerateMipmap GL11/GL_TEXTURE_2D)))
+
 (defn- gen-vao []
   (let [vao (GL30/glGenVertexArrays)]
     (GL30/glBindVertexArray vao)
@@ -64,21 +76,28 @@
   2. Generates a VBO and uploads the vertices
   3. Generates an index buffer and uploads the indices
 
-  Returns an object with the :vao :vbo :idx and :vertex-count"
-  [program {:keys [:mesh/vertices :mesh/indices :glsl/attributes]}]
+  Returns an object with the :vao :vbo :idx :tex and :vertex-count"
+  [program {:keys [:mesh/vertices :mesh/indices :mesh/texture :glsl/attributes]}]
   (let [vao (gen-vao)
         vbo (store-data program vertices attributes)
-        idx (bind-indices indices)]
+        idx (bind-indices indices)
+        tex (when-let [{:keys [:texture/pixels :glsl/name]}  texture]
+              (load-texture program pixels name))]
     (GL30/glBindVertexArray 0)
     {:vao vao
      :vbo vbo
      :idx idx
+     :tex tex
      :vertex-count (count indices)}))
 
 (defn delete [mesh]
   (println "Deleting mesh" mesh)
   (GL15/glDeleteBuffers (:vbo mesh))
   (GL15/glDeleteBuffers (:idx mesh))
+  (when-let [tex (:tex mesh)]
+    (GL11/glBindTexture GL11/GL_TEXTURE_2D 0)
+    (GL11/glDeleteTextures tex))
+  ;; TODO might need to GL20/glDisableVertexAttribArray
   (GL30/glDeleteVertexArrays (:vao mesh)))
 
 (defn draw [mesh]

@@ -50,6 +50,35 @@
     {:glsl/name "vcol" :glsl/dimensions 3}
     {:glsl/name "vopacity" :glsl/dimensions 1}]})
 
+(def texture
+  {:entity/id :texture
+   :entity/name "Texture"
+
+   :mesh/vertices
+   [ 0.5  0.5 0.0 1.0 1.0
+    -0.5  0.5 0.0 0.0 1.0
+    -0.5 -0.5 0.0 0.0 0.0]
+
+   :mesh/indices
+   [0 1 2]
+
+   :mesh/texture
+   {:texture/pixels
+    [0.0 0.0 1.0
+     0.0 1.0 0.0
+     1.0 0.0 0.0
+     1.0 1.0 1.0]
+    :glsl/name "tex"}
+
+   :glsl/vertex-source (shader/resource-file "texture.vert")
+   :glsl/fragment-source (shader/resource-file "texture.frag")
+
+   :glsl/attributes
+   [{:glsl/name "point" :glsl/dimensions 3}
+    {:glsl/name "texcoord" :glsl/dimensions 2}]})
+
+(def DEFAULT_ENTITIES [texture])
+
 (defn- key-callback [window key scancode action mods]
   (println "key-event" :key key :scancode scancode :action action :mods mods)
 
@@ -61,7 +90,7 @@
       GLFW/GLFW_KEY_R
       ;; TODO would work better if we decouple the compiled shader data from the
       ;; entity data, this way we don't have to merge-with merge e.a
-      (do (db/update-entities! [rgb-triangle])
+      (do (db/update-entities! DEFAULT_ENTITIES)
           (doseq [entity (db/entities)]
             (println :entity entity)
             (when-let [new-entity (entity/re-compile! entity)]
@@ -75,7 +104,7 @@
     ::window/height height
     ::window/title "Wolftrap Visuals"
     ::window/key-callback key-callback}
-   [rgb-triangle #_fractal-canvas]))
+   DEFAULT_ENTITIES))
 
 (defn -main [& _args]
   (spit ".nrepl-port" 7888)
