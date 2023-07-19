@@ -29,6 +29,9 @@
     (GLFW/glfwSwapBuffers window)
     (GLFW/glfwPollEvents)))
 
+;; TODO make a macro with-window-context and a body to be ran. Maybe bind should
+;; close? Or let the body call windowShoudlClose
+;; Or have an :init and a :draw option, might be simpler.
 (defn run!
   [window-opts entities]
   (try
