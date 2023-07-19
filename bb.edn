@@ -1,2 +1,3 @@
 {:tasks
- {run (clojure "-M:lwjgl:dev:local-dev -m cev.main")}}
+ {run (clojure "-M:lwjgl -m cev.main")
+  nrepl (clojure "-M:lwjgl:dev:local-dev -m cev.dev.nrepl")}}

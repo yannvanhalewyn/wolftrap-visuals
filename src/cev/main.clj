@@ -6,9 +6,7 @@
    [cev.gl.entity :as entity]
    [cev.entities :as entities]
    [cev.gl.window :as window]
-   [cev.midi :as midi]
-   [clojure.java.io :as io]
-   [nrepl.server :as nrepl])
+   [cev.midi :as midi])
   (:import
    [org.lwjgl.glfw GLFW]))
 
@@ -45,8 +43,5 @@
    (entities/enabled-entities)))
 
 (defn -main [& _args]
-  (spit ".nrepl-port" 7888)
-  (nrepl/start-server :port 7888)
   (midi/add-listener! handle-midi!)
-  (run! 800 600)
-  (io/delete-file ".nrepl-port"))
+  (run! 800 600))
