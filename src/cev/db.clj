@@ -1,4 +1,5 @@
 (ns cev.db
+  (:require [medley.core :as m])
   (:refer-clojure :exclude [get]))
 
 (defonce db (atom {}))
@@ -11,6 +12,12 @@
 
 (defn add-entity! [entity]
   (swap! db assoc-in [:db/entities (:entity/id entity)] entity))
+
+(defn update-entities! [entities]
+  (swap! db update :db/entities #(merge-with merge % (m/index-by :entity/id entities)))
+  (prn (:db/entities @db))
+  #_(doseq [entity entities]
+    (swap! db update-in [:db/entities (:entity/id entity)] merge entity)))
 
 (defn entities []
   (vals (:db/entities @db)))

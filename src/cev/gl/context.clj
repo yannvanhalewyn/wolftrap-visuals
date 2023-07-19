@@ -39,12 +39,16 @@
         (db/add-entity! (entity/compile! entity)))
 
       (GL11/glEnable GL11/GL_DEPTH_TEST)
+      (GL11/glEnable GL11/GL_BLEND)
+      (GL11/glBlendFunc GL11/GL_SRC_ALPHA GL11/GL_ONE_MINUS_SRC_ALPHA)
+
       (while (not (GLFW/glfwWindowShouldClose window))
         (draw!))
 
       (doseq [entity (db/entities)]
         (shader/delete (:entity/program entity)))
       (GLFW/glfwDestroyWindow window))
+
     (finally
       (GLFW/glfwTerminate)
       (shutdown-agents)

@@ -16,36 +16,39 @@
   (db/handle-midi! msg))
 
 (def fractal-canvas
-  (entity/make
-   {:entity/name "Fractal Canvas"
-    :mesh/vertices
-    [-1.0 -1.0
-     -1.0  1.0
-      1.0  1.0
-      1.0 -1.0]
-    :mesh/indices
-    [0 1 2 0 2 3]
+  {:entity/id :fractal-canvas
+   :entity/name "Fractal Canvas"
 
-    :glsl/vertex-source (shader/resource-file "canvas.vert")
-    :glsl/fragment-source (shader/resource-file "distance_fractal.frag")
-    :glsl/attributes
-    [{:glsl/name "pos" :glsl/dimensions 2}]}))
+   :mesh/vertices
+   [-1.0 -1.0
+    -1.0  1.0
+     1.0  1.0
+     1.0 -1.0]
+   :mesh/indices
+   [0 1 2 0 2 3]
+
+   :glsl/vertex-source (shader/resource-file "canvas.vert")
+   :glsl/fragment-source (shader/resource-file "distance_fractal.frag")
+   :glsl/attributes
+   [{:glsl/name "pos" :glsl/dimensions 2}]})
 
 (def rgb-triangle
-  (entity/make
-   {:entity/name "RGB Triangle"
-    :mesh/vertices
-    [-1.0 -1.0 0.0 1.0 0.0 0.0
-      0.0  1.0 0.0 0.0 1.0 0.0
-      1.0 -1.0 0.0 0.0 0.0 1.0]
-    :mesh/indices
-    [0 1 2]
+  {:entity/id :rgb-triangle
+   :entity/name "RGB Triangle"
 
-    :glsl/vertex-source (shader/resource-file "playground.vert")
-    :glsl/fragment-source (shader/resource-file "playground.frag")
-    :glsl/attributes
-    [{:glsl/name "vpos" :glsl/dimensions 3}
-     {:glsl/name "vcol" :glsl/dimensions 3}]}))
+   :mesh/vertices
+   [-1.0 -1.0 0.0 1.0 0.0 0.0 0.6
+     0.0  1.0 0.0 0.0 1.0 0.0 0.0
+     1.0 -1.0 0.0 0.0 0.0 1.0 1.0]
+   :mesh/indices
+   [0 1 2]
+
+   :glsl/vertex-source (shader/resource-file "playground.vert")
+   :glsl/fragment-source (shader/resource-file "playground.frag")
+   :glsl/attributes
+   [{:glsl/name "vpos" :glsl/dimensions 3}
+    {:glsl/name "vcol" :glsl/dimensions 3}
+    {:glsl/name "vopacity" :glsl/dimensions 1}]})
 
 (defn- key-callback [window key scancode action mods]
   (println "key-event" :key key :scancode scancode :action action :mods mods)
@@ -56,9 +59,13 @@
       (GLFW/glfwSetWindowShouldClose window true)
 
       GLFW/GLFW_KEY_R
-      (doseq [entity (db/entities)]
-        (when-let [new-entity (entity/re-compile! entity)]
-          (db/add-entity! new-entity)))
+      ;; TODO would work better if we decouple the compiled shader data from the
+      ;; entity data, this way we don't have to merge-with merge e.a
+      (do (db/update-entities! [rgb-triangle])
+          (doseq [entity (db/entities)]
+            (println :entity entity)
+            (when-let [new-entity (entity/re-compile! entity)]
+              (db/add-entity! new-entity))))
 
       nil)))
 
@@ -68,7 +75,7 @@
     ::window/height height
     ::window/title "Wolftrap Visuals"
     ::window/key-callback key-callback}
-   [rgb-triangle fractal-canvas]))
+   [rgb-triangle #_fractal-canvas]))
 
 (defn -main [& _args]
   (spit ".nrepl-port" 7888)

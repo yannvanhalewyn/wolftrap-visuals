@@ -3,9 +3,6 @@
    [cev.gl.mesh :as mesh]
    [cev.gl.shader :as shader]))
 
-(defn make [attrs]
-  (merge {:entity/id (random-uuid)} attrs))
-
 (defn compile! [entity]
   (when-let [program (shader/load entity)]
     (let [mesh (mesh/create program entity)]
