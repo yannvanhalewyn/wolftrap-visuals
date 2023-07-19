@@ -1,4 +1,5 @@
 (ns cev.gl.mesh
+  (:require [cev.gl.shader :as shader])
   (:import
    [org.lwjgl BufferUtils]
    [org.lwjgl.opengl GL11 GL12 GL13 GL15 GL20 GL30]))
@@ -71,39 +72,47 @@
     (GL30/glBindVertexArray vao)
     vao))
 
-(defn create
+(defn load!
   "Creates a mesh and loads data to GL.
-  1. Creates a VAO for the mesh
-  2. Generates a VBO and uploads the vertices
-  3. Generates an index buffer and uploads the indices
+  1. Compiles the GLSL program
+  2. Creates a VAO for the mesh
+  3. Generates a VBO and uploads the vertices
+  4. Generates an index buffer and uploads the indices
 
   Returns an object with the :vao :vbo :idx :tex and :vertex-count"
-  [program {:keys [:mesh/vertices :mesh/indices :mesh/texture :glsl/attributes]}]
-  (let [vao (gen-vao)
-        vbo (store-data program vertices attributes)
-        idx (bind-indices indices)
-        tex (when-let [{:keys [:texture/pixels :glsl/name]} texture]
-              (load-texture program pixels name))]
-    (GL30/glBindVertexArray 0)
-    {:vao vao
-     :vbo vbo
-     :idx idx
-     :tex tex
-     :vertex-count (count indices)}))
+  [{:keys [:mesh/vertices :mesh/indices :mesh/texture :glsl/attributes]
+    :as entity}]
+  (when-let [program (shader/load! entity)]
+    (let [vao (gen-vao)
+          vbo (store-data program vertices attributes)
+          idx (bind-indices indices)
+          tex (when-let [{:keys [:texture/pixels :glsl/name]} texture]
+                (load-texture program pixels name))]
+      (println
+       (format "Compiled entity %s, program-id: %d | vao: %d | vertex count: %d"
+               (:entity/id entity) program vao (count indices)))
+      (GL30/glBindVertexArray 0)
+      {:gl/program program
+       :gl/vao vao
+       :gl/vbo vbo
+       :gl/idx idx
+       :gl/tex tex
+       :gl/vertex-count (count indices)})))
 
-(defn delete [mesh]
+(defn destroy! [mesh]
   (println "Deleting mesh" mesh)
-  (GL15/glDeleteBuffers (:vbo mesh))
-  (GL15/glDeleteBuffers (:idx mesh))
-  (when-let [tex (:tex mesh)]
+  (GL15/glDeleteBuffers (:gl/vbo mesh))
+  (GL15/glDeleteBuffers (:gl/idx mesh))
+  (when-let [tex (:gl/tex mesh)]
     (GL11/glBindTexture GL11/GL_TEXTURE_2D 0)
     (GL11/glDeleteTextures tex))
-  ;; TODO might need to GL20/glDisableVertexAttribArray
-  (GL30/glDeleteVertexArrays (:vao mesh)))
+  (GL30/glDeleteVertexArrays (:gl/vao mesh))
+  (shader/delete! (:gl/program mesh)))
 
-(defn draw [mesh]
-  (GL30/glBindVertexArray (:vao mesh))
-  (when-let [tex (:tex mesh)]
+(defn draw! [mesh]
+  (shader/use! (:gl/program mesh))
+  (GL30/glBindVertexArray (:gl/vao mesh))
+  (when-let [tex (:gl/tex mesh)]
     (GL11/glBindTexture GL11/GL_TEXTURE_2D tex))
-  (GL11/glDrawElements GL11/GL_TRIANGLES (:vertex-count mesh) GL11/GL_UNSIGNED_INT 0)
+  (GL11/glDrawElements GL11/GL_TRIANGLES (:gl/vertex-count mesh) GL11/GL_UNSIGNED_INT 0)
   (GL30/glBindVertexArray 0))

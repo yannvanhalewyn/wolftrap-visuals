@@ -24,14 +24,13 @@
 (defn resource-file [shader-name]
   (io/resource (str "cev/gl/shaders/" shader-name)))
 
-(defn load [{:keys [:glsl/vertex-source :glsl/fragment-source]}]
+(defn load! [{:keys [:glsl/vertex-source :glsl/fragment-source]}]
   (let [vertex-shader (make-shader (slurp vertex-source) GL20/GL_VERTEX_SHADER)
         fragment-shader (make-shader (slurp fragment-source) GL20/GL_FRAGMENT_SHADER)]
     (when (and vertex-shader fragment-shader)
-      (println "Loaded shaders, making program...")
       (make-program vertex-shader fragment-shader))))
 
-(defn use [program]
+(defn use! [program]
   (GL20/glUseProgram program))
 
 (defn uniform-location [program name]
@@ -47,6 +46,5 @@
   (when-let [loc (uniform-location program name)]
     (GL20/glUniform1f loc x)))
 
-(defn delete [program]
-  (println "Deleting program" program)
+(defn delete! [program]
   (GL20/glDeleteProgram program))
