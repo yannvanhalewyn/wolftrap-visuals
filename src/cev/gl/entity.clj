@@ -1,7 +1,7 @@
-(ns cev.entity
+(ns cev.gl.entity
   (:require
-   [cev.mesh :as mesh]
-   [cev.shader :as shader]))
+   [cev.gl.mesh :as mesh]
+   [cev.gl.shader :as shader]))
 
 (defn make [attrs]
   (merge {:entity/id (random-uuid)} attrs))

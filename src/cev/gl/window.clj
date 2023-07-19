@@ -1,4 +1,4 @@
-(ns cev.window
+(ns cev.gl.window
   (:import
    [org.lwjgl BufferUtils]
    [org.lwjgl.glfw GLFW GLFWErrorCallback GLFWKeyCallback]

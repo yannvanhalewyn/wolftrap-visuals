@@ -1,4 +1,4 @@
-(ns cev.shader
+(ns cev.gl.shader
   (:refer-clojure :exclude [use load])
   (:require [clojure.java.io :as io])
   (:import [org.lwjgl.opengl GL20]))

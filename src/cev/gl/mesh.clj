@@ -1,6 +1,7 @@
-(ns cev.mesh
-  (:import [org.lwjgl BufferUtils]
-           [org.lwjgl.opengl GL11 GL15 GL20 GL30]))
+(ns cev.gl.mesh
+  (:import
+   [org.lwjgl BufferUtils]
+   [org.lwjgl.opengl GL11 GL15 GL20 GL30]))
 
 (defn buffer-maker [create]
   (fn make-buffer--x [data]

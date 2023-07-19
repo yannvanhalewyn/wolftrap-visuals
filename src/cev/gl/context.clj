@@ -1,12 +1,12 @@
-(ns cev.gl-context
+(ns cev.gl.context
   (:refer-clojure :exclude [run!])
   (:require
    [cev.db :as db]
-   [cev.entity :as entity]
-   [cev.mesh :as mesh]
-   [cev.midi :as midi]
-   [cev.shader :as shader]
-   [cev.window :as window])
+   [cev.gl.entity :as entity]
+   [cev.gl.mesh :as mesh]
+   [cev.gl.shader :as shader]
+   [cev.gl.window :as window]
+   [cev.midi :as midi])
   (:import
    [org.lwjgl.glfw GLFW]
    [org.lwjgl.opengl GL11]))
