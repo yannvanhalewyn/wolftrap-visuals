@@ -21,6 +21,7 @@
 (defn init
   [{::keys [width height title key-callback]}]
   ;; Technically this callback was .free'd up before exiting, not sure if necessary
+  (println "Initializing GLFW window")
   (GLFW/glfwSetErrorCallback (GLFWErrorCallback/createPrint System/err))
 
   (when-not (GLFW/glfwInit)

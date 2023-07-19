@@ -5,10 +5,12 @@
    [nrepl.server :as nrepl]
    [cider.nrepl]))
 
+(set! *print-namespace-maps* false)
+
 (defn -main [& _args]
-  (spit ".nrepl-port" 7888)
-  (nrepl/start-server
-   :port 7888
-   :handler cider.nrepl/cider-nrepl-handler)
-  (apply main/-main _args)
-  (io/delete-file ".nrepl-port"))
+  (let [port 7888]
+    (spit ".nrepl-port" port)
+    (nrepl/start-server :port port :handler cider.nrepl/cider-nrepl-handler)
+    (println "nREPL started on port" port)
+    (apply main/-main _args)
+    (io/delete-file ".nrepl-port")))

@@ -34,12 +34,12 @@
       (let [device (MidiSystem/getMidiDevice device-info)]
         ;; Does it need to do it for every transmitter? What are all the
         ;; transmitters? Minilab has 6
-        #_(doseq [transmitter (.getTransmitters device)]
-            (println transmitter))
-
+        ;; (doseq [transmitter (.getTransmitters device)]
+        ;;   (println transmitter))
         (try
+          (println "Adding MIDI listener to" (.. device getDeviceInfo getName))
           (let [transmitter (.getTransmitter device)]
             (.setReceiver transmitter receiver))
           (.open device)
           (catch MidiUnavailableException e
-            (println (str device-info) (.getMessage e))))))))
+            (println "Error:" (str device-info) (.getMessage e))))))))
