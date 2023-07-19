@@ -17,8 +17,7 @@
   (comp (buffer-maker #(BufferUtils/createIntBuffer %)) int-array))
 
 (defn- setup-attrib-pointers! [program attributes]
-  (let [stride (* (apply + (map :glsl/dimensions attributes))
-                  Float/BYTES)]
+  (let [stride (apply + (map :glsl/dimensions attributes))]
     (loop [[attr & others] attributes
            offset 0]
       (let [dimensions (:glsl/dimensions attr)
@@ -27,11 +26,12 @@
         (when (= attr-location -1)
           (println "ERROR: could not find attribute " (:glsl/name attr)))
         (GL20/glVertexAttribPointer
-         attr-location dimensions GL11/GL_FLOAT false stride offset)
+         attr-location dimensions GL11/GL_FLOAT false
+         (* stride Float/BYTES) (* offset Float/BYTES))
         (GL20/glEnableVertexAttribArray attr-location)
 
         (when (seq others)
-          (recur others (* dimensions Float/BYTES)))))))
+          (recur others (+ offset dimensions)))))))
 
 (defn- store-data [program vertices attributes]
   (let [vbo (GL15/glGenBuffers)
