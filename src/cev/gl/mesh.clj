@@ -63,7 +63,8 @@
     (GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_WRAP_S GL11/GL_REPEAT)
     (GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_MIN_FILTER GL11/GL_NEAREST)
     (GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_MAG_FILTER GL11/GL_NEAREST)
-    (GL30/glGenerateMipmap GL11/GL_TEXTURE_2D)))
+    (GL30/glGenerateMipmap GL11/GL_TEXTURE_2D)
+    tex))
 
 (defn- gen-vao []
   (let [vao (GL30/glGenVertexArrays)]
@@ -81,7 +82,7 @@
   (let [vao (gen-vao)
         vbo (store-data program vertices attributes)
         idx (bind-indices indices)
-        tex (when-let [{:keys [:texture/pixels :glsl/name]}  texture]
+        tex (when-let [{:keys [:texture/pixels :glsl/name]} texture]
               (load-texture program pixels name))]
     (GL30/glBindVertexArray 0)
     {:vao vao
@@ -102,5 +103,7 @@
 
 (defn draw [mesh]
   (GL30/glBindVertexArray (:vao mesh))
+  (when-let [tex (:tex mesh)]
+    (GL11/glBindTexture GL11/GL_TEXTURE_2D tex))
   (GL11/glDrawElements GL11/GL_TRIANGLES (:vertex-count mesh) GL11/GL_UNSIGNED_INT 0)
   (GL30/glBindVertexArray 0))

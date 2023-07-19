@@ -92,11 +92,13 @@
       GLFW/GLFW_KEY_R
       ;; TODO would work better if we decouple the compiled shader data from the
       ;; entity data, this way we don't have to merge-with merge e.a
-      (do (db/update-entities! DEFAULT_ENTITIES)
-          (doseq [entity (db/entities)]
-            (println :entity entity)
-            (when-let [new-entity (entity/re-compile! entity)]
-              (db/add-entity! new-entity))))
+      (try
+        (db/update-entities! DEFAULT_ENTITIES)
+        (doseq [entity (db/entities)]
+          (when-let [new-entity (entity/re-compile! entity)]
+            (db/add-entity! new-entity)))
+        (catch Exception e
+          (println e)))
 
       nil)))
 

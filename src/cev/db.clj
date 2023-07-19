@@ -14,10 +14,7 @@
   (swap! db assoc-in [:db/entities (:entity/id entity)] entity))
 
 (defn update-entities! [entities]
-  (swap! db update :db/entities #(merge-with merge % (m/index-by :entity/id entities)))
-  (prn (:db/entities @db))
-  #_(doseq [entity entities]
-    (swap! db update-in [:db/entities (:entity/id entity)] merge entity)))
+  (swap! db update :db/entities #(merge-with merge % (m/index-by :entity/id entities))))
 
 (defn entities []
   (vals (:db/entities @db)))
