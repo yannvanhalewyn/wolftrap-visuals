@@ -4,16 +4,6 @@
 (defonce db (atom {}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Old mutations
-
-(defn handle-midi! [msg]
-  (println "MIDI" msg)
-  (swap! db assoc-in [:midi-cc (:control msg)] (:value msg)))
-
-(defn midi-cc [cc]
-  (get-in @db [:midi-cc cc]))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FX
 
 (defonce fx (atom {}))

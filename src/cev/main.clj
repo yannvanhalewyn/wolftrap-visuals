@@ -10,7 +10,7 @@
    [org.lwjgl.glfw GLFW]))
 
 (defn- handle-midi! [msg]
-  (db/handle-midi! msg))
+  (db/dispatch! [::midi/event-received msg]))
 
 (defn- key-callback [window key scancode action mods]
   ;; (println "key-event" :key key :scancode scancode :action action :mods mods)

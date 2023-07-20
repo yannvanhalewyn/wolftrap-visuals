@@ -1,6 +1,7 @@
 (ns dev
   (:require
    [cev.db :as db]
+   [cev.midi :as midi]
    [cev.entities :as entities]))
 
 (comment
@@ -10,9 +11,11 @@
   (db/dispatch! [::entities/set [entities/rgb-triangle]])
   (db/dispatch! [::entities/set [entities/texture]])
 
-  (db/handle-midi! {:control 72 :value 10})
-  (db/handle-midi! {:control 79 :value 25})
-  (db/handle-midi! {:control 91 :value 0})
+  (db/dispatch! [::midi/event-received {:control 72 :value 10}])
+  (db/dispatch! [::midi/event-received {:control 79 :value 25}])
+  (db/dispatch! [::midi/event-received {:control 91 :value 0}])
+
+  (db/subscribe [::midi/cc-value 72 [10 20]])
 
 
   )

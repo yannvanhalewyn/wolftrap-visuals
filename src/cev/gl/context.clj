@@ -78,9 +78,9 @@
     (doseq [[_entity gl-entity] (db/subscribe [::entities/all])]
       (when-let [{:keys [:gl/program]} gl-entity]
         (shader/uniform-2f program "resolution" width height)
-        (shader/uniform-1f program "iterations" (midi/normalize (db/midi-cc 72) 1.0 20.0))
-        (shader/uniform-1f program "complexity" (midi/normalize (db/midi-cc 79)))
-        (shader/uniform-1f program "brightness" (midi/normalize (db/midi-cc 91) 0.01 1.0))
+        (shader/uniform-1f program "iterations" (db/subscribe [::midi/cc-value 72 [1.0 20.0]]))
+        (shader/uniform-1f program "complexity" (db/subscribe [::midi/cc-value 79 [0.0 1.0]]))
+        (shader/uniform-1f program "brightness" (db/subscribe [::midi/cc-value 91 [0.01 1.0]]))
         (shader/uniform-1f program "time" (GLFW/glfwGetTime))
         (mesh/draw! gl-entity)))
 
