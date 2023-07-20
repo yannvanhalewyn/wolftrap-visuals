@@ -1,8 +1,8 @@
 (ns cev.entities
   (:require
    [cev.db :as db]
-   [cev.gl.entity :as entity]
-   [cev.gl.shader :as shader]
+   [cev.engine.entity :as entity]
+   [cev.engine.shader :as shader]
    [medley.core :as m]))
 
 (def fractal-canvas

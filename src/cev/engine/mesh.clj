@@ -1,5 +1,5 @@
-(ns cev.gl.mesh
-  (:require [cev.gl.shader :as shader])
+(ns cev.engine.mesh
+  (:require [cev.engine.shader :as shader])
   (:import
    [org.lwjgl BufferUtils]
    [org.lwjgl.opengl GL11 GL12 GL13 GL15 GL20 GL30]))

@@ -3,9 +3,9 @@
   (:require
    [cev.db :as db]
    [cev.entities :as entities]
-   [cev.gl.mesh :as mesh]
-   [cev.gl.shader :as shader]
-   [cev.gl.window :as window]
+   [cev.engine.mesh :as mesh]
+   [cev.engine.shader :as shader]
+   [cev.engine.window :as window]
    [cev.midi :as midi])
   (:import
    [clojure.lang PersistentQueue]
