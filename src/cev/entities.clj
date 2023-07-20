@@ -28,18 +28,17 @@
     ;; :entity/enabled? true
 
     :mesh/vertices
-    [-1.0 -1.0 0.0 1.0 0.0 0.0 0.6
-     0.0  1.0 0.0 0.0 1.0 0.0 0.0
-     1.0 -1.0 0.0 0.0 0.0 1.0 1.0]
+    [-1.0 -1.0 0.0 1.0 0.0 0.0
+     0.0  1.0 0.0 0.0 1.0 0.0
+     1.0 -1.0 0.0 0.0 0.0 1.0]
     :mesh/indices
     [0 1 2]
 
-    :glsl/vertex-source (shader/resource-file "playground.vert")
-    :glsl/fragment-source (shader/resource-file "playground.frag")
+    :glsl/vertex-source (shader/resource-file "triangle.vert")
+    :glsl/fragment-source (shader/resource-file "triangle.frag")
     :glsl/attributes
     [{:glsl/name "vpos" :glsl/dimensions 3}
-     {:glsl/name "vcol" :glsl/dimensions 3}
-     {:glsl/name "vopacity" :glsl/dimensions 1}]}))
+     {:glsl/name "vcol" :glsl/dimensions 3}]}))
 
 (def texture
   (entity/make

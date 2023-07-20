@@ -12,6 +12,5 @@ void main(void)
   vec2 uv = pos.xy;
   uv.x *= resolution.x / resolution.y;
   vec2 uv0 = uv;
-  // fragColor = vec4(uv, 0.0, 1.0);
   fragColor = col;
 }
