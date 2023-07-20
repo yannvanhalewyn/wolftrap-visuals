@@ -1,7 +1,9 @@
 (ns cev.entities
   (:require
+   [cev.db :as db]
    [cev.gl.entity :as entity]
-   [cev.gl.shader :as shader]))
+   [cev.gl.shader :as shader]
+   [medley.core :as m]))
 
 (def fractal-canvas
   (entity/make
@@ -71,3 +73,33 @@
 
 (defn enabled-entities []
   (filter :entity/enabled? [fractal-canvas rgb-triangle texture]))
+
+(defmethod db/run-event ::set
+  [{:keys [db]} [_ new-entities]]
+  (let [old-gl-entities (vals (:db/gl-entities db))]
+    {:db (assoc db :db/entities (m/index-by :entity/id new-entities))
+     :gl/enqueue (concat
+                  (for [new-entity new-entities]
+                    [:gl/compile-entity new-entity])
+                  (for [old-gl-entity old-gl-entities]
+                    [:gl/destroy-entity old-gl-entity]))}))
+
+(defmethod db/run-event ::clear
+  [{:keys [db]} _]
+  {:gl/enqueue (for [gl-entity (vals (:db/gl-entities db))]
+                 [:gl/destroy-entity gl-entity])})
+
+(defmethod db/run-event :gl/loaded-gl-entity
+  [{:keys [db]} [_ entity-id gl-entity]]
+  {:db (-> db
+           (assoc-in [:db/gl-entities (:gl/id gl-entity)] gl-entity)
+           (assoc-in [:db/entities entity-id :gl/id] (:gl/id gl-entity)))})
+
+(defmethod db/run-event :gl/destroyed-gl-entity
+  [{:keys [db]} [_ gl-entity-id]]
+  {:db (m/dissoc-in db [:db/gl-entities gl-entity-id])})
+
+(defmethod db/read ::all
+  [{:db/keys [entities gl-entities]} _]
+  (for [entity (vals entities)]
+    [entity (get gl-entities (:gl/id entity))]))

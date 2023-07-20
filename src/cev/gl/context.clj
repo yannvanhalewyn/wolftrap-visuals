@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [run!])
   (:require
    [cev.db :as db]
+   [cev.entities :as entities]
    [cev.gl.mesh :as mesh]
    [cev.gl.shader :as shader]
    [cev.gl.window :as window]
@@ -74,7 +75,7 @@
     (GL11/glClearColor 0.0 0.0 0.0 0.0)
     (GL11/glClear (bit-or GL11/GL_COLOR_BUFFER_BIT  GL11/GL_DEPTH_BUFFER_BIT))
 
-    (doseq [[_entity gl-entity] (db/entities)]
+    (doseq [[_entity gl-entity] (db/subscribe [::entities/all])]
       (when-let [{:keys [:gl/program]} gl-entity]
         (shader/uniform-2f program "resolution" width height)
         (shader/uniform-1f program "iterations" (midi/normalize (db/midi-cc 72) 1.0 20.0))

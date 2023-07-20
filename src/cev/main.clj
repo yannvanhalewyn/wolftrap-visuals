@@ -21,12 +21,12 @@
       (GLFW/glfwSetWindowShouldClose window true)
 
       GLFW/GLFW_KEY_R
-      (db/dispatch! [:set-entities (entities/enabled-entities)])
+      (db/dispatch! [::entities/set (entities/enabled-entities)])
 
       nil)))
 
 (defn- run! [width height]
-  (db/dispatch! [:set-entities (entities/enabled-entities)])
+  (db/dispatch! [::entities/set (entities/enabled-entities)])
   (gl.context/run!
    {::window/width width
     ::window/height height
