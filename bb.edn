@@ -3,7 +3,7 @@
           :task (clojure "-M:lwjgl -m cev.main")}
 
   nrepl  {:depends [vendor]
-          :task (clojure "-M:lwjgl:dev -m cev.dev.nrepl")}
+          :task (apply clojure "-M:lwjgl:dev -m cev.dev.nrepl" *command-line-args*)}
 
   vendor {:requires ([babashka.fs :as fs]
                      [clojure.string :as str])
