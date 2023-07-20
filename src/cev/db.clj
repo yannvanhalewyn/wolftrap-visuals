@@ -63,6 +63,6 @@
   (let [coeffects {:db @db}
         effects (run-event coeffects event)]
     (doseq [[effect-key arg] effects]
-      (if-let [f (clojure.core/get @fx effect-key)]
+      (if-let [f (get @fx effect-key)]
         (f arg)
         (println "ERROR: unknown effect" effect-key)))))

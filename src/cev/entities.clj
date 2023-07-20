@@ -5,8 +5,7 @@
 
 (def fractal-canvas
   (entity/make
-   {:entity/id :fractal-canvas
-    :entity/name "Fractal Canvas"
+   {:entity/name "Fractal Canvas"
 
     :mesh/vertices
     [-1.0 -1.0
