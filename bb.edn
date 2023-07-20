@@ -1,6 +1,17 @@
 {:tasks
- {run    (do (run 'vendor)
-             (clojure "-M:lwjgl -m cev.main"))
-  nrepl  (do (run 'vendor)
-             (clojure "-M:lwjgl:dev -m cev.dev.nrepl"))
-  vendor (shell "javac" "vendor/FastNoiseLite.java")}}
+ {run    {:depends [vendor]
+          :task (clojure "-M:lwjgl -m cev.main")}
+
+  nrepl  {:depends [vendor]
+          :task (clojure "-M:lwjgl:dev -m cev.dev.nrepl")}
+
+  vendor {:requires ([babashka.fs :as fs]
+                     [clojure.string :as str])
+          :enter (defn class-file [java-file]
+                   (str/replace java-file (re-pattern ".java$") ".class"))
+          :task
+          (let [java-files (fs/glob "vendor" "**.java")]
+            (doseq [java-file java-files]
+              (when (seq (fs/modified-since (class-file java-file) [java-file]))
+                (println "Compiling" (str java-file))
+                (shell "javac" java-file))))}}}
