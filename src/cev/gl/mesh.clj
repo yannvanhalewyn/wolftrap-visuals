@@ -79,7 +79,8 @@
   3. Generates a VBO and uploads the vertices
   4. Generates an index buffer and uploads the indices
 
-  Returns an object with the :vao :vbo :idx :tex and :vertex-count"
+  Returns a graphics entity with the program, vao, vbo, idx, tex, and
+  vertex-count"
   [{:keys [:mesh/vertices :mesh/indices :mesh/texture :glsl/attributes]
     :as entity}]
   (when-let [program (shader/load! entity)]
@@ -92,27 +93,28 @@
        (format "Compiled entity %s, program-id: %d | vao: %d | vertex count: %d"
                (:entity/id entity) program vao (count indices)))
       (GL30/glBindVertexArray 0)
-      {:gl/program program
+      {:gl/id (random-uuid)
+       :gl/program program
        :gl/vao vao
        :gl/vbo vbo
        :gl/idx idx
        :gl/tex tex
        :gl/vertex-count (count indices)})))
 
-(defn destroy! [mesh]
-  (println "Deleting mesh" mesh)
-  (GL15/glDeleteBuffers (:gl/vbo mesh))
-  (GL15/glDeleteBuffers (:gl/idx mesh))
-  (when-let [tex (:gl/tex mesh)]
+(defn destroy! [gl-entity]
+  (println "Deleting mesh" gl-entity)
+  (GL15/glDeleteBuffers (:gl/vbo gl-entity))
+  (GL15/glDeleteBuffers (:gl/idx gl-entity))
+  (when-let [tex (:gl/tex gl-entity)]
     (GL11/glBindTexture GL11/GL_TEXTURE_2D 0)
     (GL11/glDeleteTextures tex))
-  (GL30/glDeleteVertexArrays (:gl/vao mesh))
-  (shader/delete! (:gl/program mesh)))
+  (GL30/glDeleteVertexArrays (:gl/vao gl-entity))
+  (shader/delete! (:gl/program gl-entity)))
 
-(defn draw! [mesh]
-  (shader/use! (:gl/program mesh))
-  (GL30/glBindVertexArray (:gl/vao mesh))
-  (when-let [tex (:gl/tex mesh)]
+(defn draw! [gl-entity]
+  (shader/use! (:gl/program gl-entity))
+  (GL30/glBindVertexArray (:gl/vao gl-entity))
+  (when-let [tex (:gl/tex gl-entity)]
     (GL11/glBindTexture GL11/GL_TEXTURE_2D tex))
-  (GL11/glDrawElements GL11/GL_TRIANGLES (:gl/vertex-count mesh) GL11/GL_UNSIGNED_INT 0)
+  (GL11/glDrawElements GL11/GL_TRIANGLES (:gl/vertex-count gl-entity) GL11/GL_UNSIGNED_INT 0)
   (GL30/glBindVertexArray 0))

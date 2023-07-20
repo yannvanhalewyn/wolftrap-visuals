@@ -12,14 +12,6 @@
    [org.lwjgl.opengl GL11]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Compilation cache
-
-(def compiled-entities (atom {}))
-
-(defn- get-mesh [entity-id]
-  (get @compiled-entities entity-id))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Queue
 
 
@@ -33,26 +25,46 @@
 
 (db/reg-fx :gl/enqueue enqueue!)
 
-(defn- exec-queue! []
-  (doseq [[action & params] (popall!)]
-    (println "GL:ACTION" action)
-    (try
+(defn- exec-messages [messages]
+  (loop [[[action & params] & other-messages] messages
+         events []]
+
+    (when action (println :gl/action action))
+
+    (if action
       (case action
 
         :gl/compile-entity
-        (let [entity (first params)
-              mesh (mesh/load! entity)]
-          (swap! compiled-entities assoc (:entity/id entity) mesh))
+        (let [entity (first params)]
+          (if-let [gl-entity (mesh/load! entity)]
+            (recur other-messages
+                   (conj events [:gl/loaded-gl-entity (:entity/id entity) gl-entity]))
+            [events (ex-info "Failed to load entity" entity)]))
 
         :gl/destroy-entity
-        (let [entity-id (:entity/id (first params))
-              mesh (get @compiled-entities entity-id)]
-          (mesh/destroy! mesh)
-          (swap! compiled-entities dissoc entity-id))
+        (let [gl-entity (first params)]
+          (mesh/destroy! gl-entity)
+          (recur other-messages
+                 (conj events [:gl/destroyed-gl-entity (:gl/id gl-entity)])))
 
         (throw (ex-info "Unknown action" action)))
-      (catch Exception e
-        (println "ERROR!" e)))))
+      [events nil])))
+
+(defn- exec-queue!
+  "This queue is in place in order to be able to dispatch GL operations needed
+  to be done (such as (re)compiling shaders) from another thread than the main
+  thread, as that would crash the program. An fx `:gl/enqueue` can be used to
+  enqueue oprations.
+
+  If an error occurs the queue will stop processing further messages, dispatch
+  the results of what was achieved so far and print the error."
+  []
+  (when-let [messages (seq (popall!))]
+    (let [[events error] (exec-messages messages)]
+      (when error
+        (println error))
+      (doseq [event events]
+        (db/dispatch! event)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Running
@@ -62,14 +74,14 @@
     (GL11/glClearColor 0.0 0.0 0.0 0.0)
     (GL11/glClear (bit-or GL11/GL_COLOR_BUFFER_BIT  GL11/GL_DEPTH_BUFFER_BIT))
 
-    (doseq [entity (db/entities)]
-      (when-let [{:keys [:gl/program] :as mesh} (get-mesh (:entity/id entity))]
+    (doseq [[_entity gl-entity] (db/entities)]
+      (when-let [{:keys [:gl/program]} gl-entity]
         (shader/uniform-2f program "resolution" width height)
         (shader/uniform-1f program "iterations" (midi/normalize (db/midi-cc 72) 1.0 20.0))
         (shader/uniform-1f program "complexity" (midi/normalize (db/midi-cc 79)))
         (shader/uniform-1f program "brightness" (midi/normalize (db/midi-cc 91) 0.01 1.0))
         (shader/uniform-1f program "time" (GLFW/glfwGetTime))
-        (mesh/draw! mesh)))
+        (mesh/draw! gl-entity)))
 
     (GLFW/glfwSwapBuffers window)
     (GLFW/glfwPollEvents)))
