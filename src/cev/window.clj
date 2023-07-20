@@ -1,4 +1,4 @@
-(ns cev.gl.context
+(ns cev.window
   (:refer-clojure :exclude [run!])
   (:require
    [cev.db :as db]
@@ -9,12 +9,10 @@
    [cev.midi :as midi])
   (:import
    [clojure.lang PersistentQueue]
-   [org.lwjgl.glfw GLFW]
-   [org.lwjgl.opengl GL11]))
+   [org.lwjgl.glfw GLFW]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Queue
-
 
 (def ^:private queue (atom (PersistentQueue/EMPTY)))
 
@@ -51,11 +49,11 @@
         (throw (ex-info "Unknown action" action)))
       [events nil])))
 
-(defn- exec-queue!
+(defn- handle-queue!
   "This queue is in place in order to be able to dispatch GL operations needed
-  to be done (such as (re)compiling shaders) from another thread than the main
-  thread, as that would crash the program. An fx `:gl/enqueue` can be used to
-  enqueue oprations.
+  to be done (such as (re)compiling shaders) asynchronously from another thread
+  than the main thread, as that would crash the program since the GL context is
+  thread bound. An fx `:gl/enqueue` can be used to enqueue oprations.
 
   If an error occurs the queue will stop processing further messages, dispatch
   the results of what was achieved so far and print the error."
@@ -67,46 +65,43 @@
       (doseq [event events]
         (db/dispatch! event)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Running
+(defn- key-callback [window key scancode action mods]
+  ;; (println "key-event" :key key :scancode scancode :action action :mods mods)
+
+  (when (= action GLFW/GLFW_RELEASE)
+    (condp = key
+      GLFW/GLFW_KEY_Q
+      (window/set-should-close! window true)
+
+      GLFW/GLFW_KEY_R
+      (db/dispatch! [::entities/set (entities/enabled-entities)])
+
+      nil)))
 
 (defn- draw! [window]
   (let [[width height] (window/get-size window)]
-    (GL11/glClearColor 0.0 0.0 0.0 0.0)
-    (GL11/glClear (bit-or GL11/GL_COLOR_BUFFER_BIT  GL11/GL_DEPTH_BUFFER_BIT))
+    (window/draw-frame!
+     window
+     (doseq [[_entity gl-entity] (db/subscribe [::entities/all])]
+       (when-let [{:keys [:gl/program]} gl-entity]
+         (shader/uniform-2f program "resolution" width height)
+         (shader/uniform-1f program "iterations" (db/subscribe [::midi/cc-value 72 [1.0 20.0]]))
+         (shader/uniform-1f program "complexity" (db/subscribe [::midi/cc-value 79 [0.0 1.0]]))
+         (shader/uniform-1f program "brightness" (db/subscribe [::midi/cc-value 91 [0.01 1.0]]))
+         (shader/uniform-1f program "time" (GLFW/glfwGetTime))
+         (mesh/draw! gl-entity))))))
 
-    (doseq [[_entity gl-entity] (db/subscribe [::entities/all])]
-      (when-let [{:keys [:gl/program]} gl-entity]
-        (shader/uniform-2f program "resolution" width height)
-        (shader/uniform-1f program "iterations" (db/subscribe [::midi/cc-value 72 [1.0 20.0]]))
-        (shader/uniform-1f program "complexity" (db/subscribe [::midi/cc-value 79 [0.0 1.0]]))
-        (shader/uniform-1f program "brightness" (db/subscribe [::midi/cc-value 91 [0.01 1.0]]))
-        (shader/uniform-1f program "time" (GLFW/glfwGetTime))
-        (mesh/draw! gl-entity)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Running
 
-    (GLFW/glfwSwapBuffers window)
-    (GLFW/glfwPollEvents)))
-
-;; TODO make a macro with-window-context and a body to be ran. Maybe bind should
-;; close? Or let the body call windowShoudlClose
-;; Or have an :init and a :draw option, might be simpler.
-(defn run!
-  [window-opts]
-  (try
-    (let [window (window/init window-opts)]
-      (GL11/glEnable GL11/GL_DEPTH_TEST)
-      (GL11/glEnable GL11/GL_BLEND)
-      (GL11/glBlendFunc GL11/GL_SRC_ALPHA GL11/GL_ONE_MINUS_SRC_ALPHA)
-
-      (while (not (GLFW/glfwWindowShouldClose window))
-        (exec-queue!)
-        (draw! window))
-
-      (db/dispatch! [:clear-entities])
-
-      (GLFW/glfwDestroyWindow window))
-
-    (finally
-      (GLFW/glfwTerminate)
-      (shutdown-agents)
-      (System/exit 0))))
+(defn run! [width height title]
+  (db/dispatch! [::entities/set (entities/enabled-entities)])
+  (window/with-window [window {::window/width width
+                               ::window/height height
+                               ::window/title title
+                               ::window/key-callback key-callback}]
+    (while (not (window/should-close? window))
+      (handle-queue!)
+      (draw! window)
+      (window/poll-events!))
+    (db/dispatch! [::entities/clear])))

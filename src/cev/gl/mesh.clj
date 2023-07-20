@@ -11,10 +11,10 @@
        (.flip buffer)
        buffer)))
 
-(def make-float-buffer
+(def ^:private make-float-buffer
   (comp (buffer-maker #(BufferUtils/createFloatBuffer %)) float-array))
 
-(def make-int-buffer
+(def ^:private make-int-buffer
   (comp (buffer-maker #(BufferUtils/createIntBuffer %)) int-array))
 
 (defn- setup-attrib-pointers! [program attributes]

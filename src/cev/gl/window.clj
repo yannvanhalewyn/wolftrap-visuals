@@ -56,4 +56,32 @@
     (GL/createCapabilities)
     (println "OpenGL version:" (GL11/glGetString GL11/GL_VERSION))
 
+    (GL11/glEnable GL11/GL_DEPTH_TEST)
+    (GL11/glEnable GL11/GL_BLEND)
+    (GL11/glBlendFunc GL11/GL_SRC_ALPHA GL11/GL_ONE_MINUS_SRC_ALPHA)
+
     window))
+
+(defn destroy [window]
+  (GLFW/glfwDestroyWindow window))
+
+(defn set-should-close! [window should-close?]
+  (GLFW/glfwSetWindowShouldClose window should-close?))
+
+(defn should-close? [window]
+  (GLFW/glfwWindowShouldClose window))
+
+(defn poll-events! []
+  (GLFW/glfwPollEvents))
+
+(defmacro with-window [[binding window-opts] & body]
+  `(let [~binding (init ~window-opts)]
+     ~@body
+     (destroy ~binding)))
+
+(defmacro draw-frame! [window & body]
+  `(do
+     (GL11/glClearColor 0.0 0.0 0.0 0.0)
+     (GL11/glClear (bit-or GL11/GL_COLOR_BUFFER_BIT  GL11/GL_DEPTH_BUFFER_BIT))
+     ~@body
+     (GLFW/glfwSwapBuffers ~window)))

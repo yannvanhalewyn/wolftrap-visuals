@@ -3,7 +3,7 @@
   (:require [clojure.java.io :as io])
   (:import [org.lwjgl.opengl GL20]))
 
-(defn make-shader [source shader-type]
+(defn- make-shader [source shader-type]
   (let [shader (GL20/glCreateShader shader-type)]
     (GL20/glShaderSource shader source)
     (GL20/glCompileShader shader)
@@ -11,7 +11,7 @@
       (println (GL20/glGetShaderInfoLog shader 1024))
       shader)))
 
-(defn make-program [vertex-shader fragment-shader]
+(defn- make-program [vertex-shader fragment-shader]
   (let [program (GL20/glCreateProgram)]
     (GL20/glAttachShader program vertex-shader)
     (GL20/glAttachShader program fragment-shader)
@@ -20,6 +20,11 @@
     (if (zero? (GL20/glGetProgrami program GL20/GL_LINK_STATUS))
       (println (GL20/glGetProgramInfoLog program 1024))
       program)))
+
+(defn- uniform-location [program name]
+  (let [loc (GL20/glGetUniformLocation program name)]
+    (when-not (= loc -1)
+      loc)))
 
 (defn resource-file [shader-name]
   (io/resource (str "cev/gl/shaders/" shader-name)))
@@ -33,10 +38,8 @@
 (defn use! [program]
   (GL20/glUseProgram program))
 
-(defn uniform-location [program name]
-  (let [loc (GL20/glGetUniformLocation program name)]
-    (when-not (= loc -1)
-      loc)))
+(defn delete! [program]
+  (GL20/glDeleteProgram program))
 
 (defn uniform-2f [program name x y]
   (when-let [loc (uniform-location program name)]
@@ -45,6 +48,3 @@
 (defn uniform-1f [program name x]
   (when-let [loc (uniform-location program name)]
     (GL20/glUniform1f loc x)))
-
-(defn delete! [program]
-  (GL20/glDeleteProgram program))

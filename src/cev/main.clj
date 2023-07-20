@@ -2,9 +2,7 @@
   (:refer-clojure :exclude [run!])
   (:require
    [cev.db :as db]
-   [cev.gl.context :as gl.context]
-   [cev.entities :as entities]
-   [cev.gl.window :as window]
+   [cev.window :as window]
    [cev.midi :as midi])
   (:import
    [org.lwjgl.glfw GLFW]))
@@ -12,26 +10,16 @@
 (defn- handle-midi! [msg]
   (db/dispatch! [::midi/event-received msg]))
 
-(defn- key-callback [window key scancode action mods]
-  ;; (println "key-event" :key key :scancode scancode :action action :mods mods)
-
-  (when (= action GLFW/GLFW_RELEASE)
-    (condp = key
-      GLFW/GLFW_KEY_Q
-      (GLFW/glfwSetWindowShouldClose window true)
-
-      GLFW/GLFW_KEY_R
-      (db/dispatch! [::entities/set (entities/enabled-entities)])
-
-      nil)))
-
 (defn- run! [width height]
-  (db/dispatch! [::entities/set (entities/enabled-entities)])
-  (gl.context/run!
-   {::window/width width
-    ::window/height height
-    ::window/title "Wolftrap Visuals"
-    ::window/key-callback key-callback}))
+  (try
+    (window/run! width height "Wolftrap Visuals")
+    (catch Exception e
+      (println "FATAL" e)
+      (System/exit -1))
+    (finally
+      (GLFW/glfwTerminate)
+      (shutdown-agents)
+      (System/exit 0))))
 
 (defn -main [& _args]
   (midi/add-listener! handle-midi!)
