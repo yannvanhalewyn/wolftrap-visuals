@@ -7,9 +7,6 @@
   (:import
    [org.lwjgl.glfw GLFW]))
 
-(defn- handle-midi! [msg]
-  (db/dispatch! [::midi/event-received msg]))
-
 (defn- run! [width height]
   (try
     (window/run! width height "Wolftrap Visuals")
@@ -22,5 +19,5 @@
       (System/exit 0))))
 
 (defn -main [& _args]
-  (midi/add-listener! handle-midi!)
+  (midi/add-listener! #(db/dispatch! [::midi/event-received %]))
   (run! 800 600))

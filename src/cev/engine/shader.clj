@@ -27,7 +27,7 @@
       loc)))
 
 (defn resource-file [shader-name]
-  (io/resource (str "cev/gl/shaders/" shader-name)))
+  (io/resource (str "cev/shaders/" shader-name)))
 
 (defn load! [{:keys [:glsl/vertex-source :glsl/fragment-source]}]
   (let [vertex-shader (make-shader (slurp vertex-source) GL20/GL_VERTEX_SHADER)
