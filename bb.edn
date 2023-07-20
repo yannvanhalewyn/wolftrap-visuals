@@ -1,3 +1,6 @@
 {:tasks
- {run (clojure "-M:lwjgl -m cev.main")
-  nrepl (clojure "-M:lwjgl:dev -m cev.dev.nrepl")}}
+ {run    (do (run 'vendor)
+             (clojure "-M:lwjgl -m cev.main"))
+  nrepl  (do (run 'vendor)
+             (clojure "-M:lwjgl:dev -m cev.dev.nrepl"))
+  vendor (shell "javac" "vendor/FastNoiseLite.java")}}
