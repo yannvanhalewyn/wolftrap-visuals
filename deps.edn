@@ -1,5 +1,6 @@
 {:deps {org.clojure/clojure {:mvn/version "1.11.1"}
         medley/medley {:mvn/version "1.4.0"}}
+ :paths ["src" "vendor"]
  :aliases
  {:dev
   {:extra-paths ["dev"]
