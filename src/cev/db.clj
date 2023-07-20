@@ -44,6 +44,11 @@
                   (for [old-gl-entity old-gl-entities]
                     [:gl/destroy-entity old-gl-entity]))}))
 
+(defmethod run-event :clear-entities
+  [{:keys [db]} _]
+  {:gl/enqueue (for [gl-entity (vals (:db/gl-entities db))]
+                 [:gl/destroy-entity gl-entity])})
+
 (defmethod run-event :gl/loaded-gl-entity
   [{:keys [db]} [_ entity-id gl-entity]]
   {:db (-> db

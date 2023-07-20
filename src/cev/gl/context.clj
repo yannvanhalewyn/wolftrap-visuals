@@ -101,8 +101,8 @@
         (exec-queue!)
         (draw! window))
 
-      (doseq [mesh (vals @compiled-entities)]
-        (mesh/destroy! mesh))
+      (db/dispatch! [:clear-entities])
+
       (GLFW/glfwDestroyWindow window))
 
     (finally
