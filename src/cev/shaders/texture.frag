@@ -6,5 +6,6 @@ uniform sampler2D tex;
 
 void main()
 {
-  fragColor = texture(tex, UV);
+  float noise = texture(tex, UV).x;
+  fragColor = vec4(vec3(noise), 1.0);
 }

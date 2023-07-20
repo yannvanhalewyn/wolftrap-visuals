@@ -38,7 +38,8 @@
           (if-let [gl-entity (mesh/load! entity)]
             (recur other-messages
                    (conj events [:gl/loaded-gl-entity (:entity/id entity) gl-entity]))
-            [events (ex-info "Failed to load entity" entity)]))
+            [events (ex-info "Failed to load entity"
+                             (select-keys entity [:entity/id :entity/name]))]))
 
         :gl/destroy-entity
         (let [gl-entity (first params)]
