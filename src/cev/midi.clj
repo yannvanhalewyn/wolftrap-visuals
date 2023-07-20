@@ -45,7 +45,7 @@
           (catch MidiUnavailableException e
             (println "Error:" (str device-info) (.getMessage e))))))))
 
-(defmethod db/run-event ::event-received
+(defmethod db/handle-event ::event-received
   [{:keys [db]} [_ msg]]
   (println "MIDI" msg)
   {:db (assoc-in db [::midi-cc (:control msg)] (:value msg))})

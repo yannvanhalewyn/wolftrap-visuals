@@ -1,34 +1,41 @@
 (ns cev.db
   (:refer-clojure :exclude [read]))
 
-(defonce db (atom {}))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FX
 
 (defonce fx (atom {}))
 
+(defn- execute-effect! [[effect-key arg]]
+  (if-let [f (get @fx effect-key)]
+    (f arg)
+    (println "ERROR: unknown effect" effect-key)))
+
 (defn reg-fx [key f]
   (swap! fx assoc key f))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; DB
+
+(defonce db (atom {}))
+
 (reg-fx :db #(reset! db %))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Event handlers
 
-(defmulti run-event (fn [_ [event-name]] event-name))
+(defmulti handle-event (fn [_ [event-name]] event-name))
 
-(defmethod run-event :default
+(defmethod handle-event :default
   [_ [event-name]]
   (println "Error: Unknown event" event-name))
 
 (defn dispatch! [event]
   (let [coeffects {:db @db}
-        effects (run-event coeffects event)]
-    (doseq [[effect-key arg] effects]
-      (if-let [f (get @fx effect-key)]
-        (f arg)
-        (println "ERROR: unknown effect" effect-key)))))
+        effects (handle-event coeffects event)]
+    (doseq [effect effects]
+      (execute-effect! effect))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Subscriptions
