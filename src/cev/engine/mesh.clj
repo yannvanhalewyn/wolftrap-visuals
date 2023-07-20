@@ -54,13 +54,14 @@
     (GL15/glBufferData GL15/GL_ELEMENT_ARRAY_BUFFER  buffer GL15/GL_STATIC_DRAW)
     vbo))
 
-(defn- load-texture [program pixels attr-name]
+(defn- load-texture
+  [program {:keys [:texture/pixels :texture/width :texture/height :glsl/name]}]
   (let [tex (GL11/glGenTextures)
         pixel-buffer (make-float-buffer pixels)]
     (GL13/glActiveTexture GL13/GL_TEXTURE0)
     (GL11/glBindTexture GL11/GL_TEXTURE_2D tex)
-    (GL20/glUniform1i (GL20/glGetUniformLocation program attr-name) 0)
-    (GL11/glTexImage2D GL11/GL_TEXTURE_2D 0 GL11/GL_RGB 2 2 0 GL12/GL_BGR GL11/GL_FLOAT pixel-buffer)
+    (GL20/glUniform1i (GL20/glGetUniformLocation program name) 0)
+    (GL11/glTexImage2D GL11/GL_TEXTURE_2D 0 GL11/GL_DEPTH_COMPONENT width height 0 GL12/GL_DEPTH_COMPONENT GL11/GL_FLOAT pixel-buffer)
     (GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_WRAP_S GL13/GL_CLAMP_TO_EDGE)
     (GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_MIN_FILTER GL11/GL_NEAREST)
     (GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_MAG_FILTER GL11/GL_NEAREST)
@@ -87,8 +88,8 @@
     (let [vao (gen-vao)
           vbo (store-data program vertices attributes)
           idx (bind-indices indices)
-          tex (when-let [{:keys [:texture/pixels :glsl/name]} texture]
-                (load-texture program pixels name))]
+          tex (when texture
+                (load-texture program texture))]
       (println
        (format "Compiled entity %s, program-id: %d | vao: %d | vertex count: %d"
                (:entity/id entity) program vao (count indices)))

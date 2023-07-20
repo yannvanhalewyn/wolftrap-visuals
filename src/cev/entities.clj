@@ -3,6 +3,7 @@
    [cev.db :as db]
    [cev.engine.entity :as entity]
    [cev.engine.shader :as shader]
+   [cev.engine.noise :as noise]
    [medley.core :as m]))
 
 (def fractal-canvas
@@ -12,8 +13,8 @@
     :mesh/vertices
     [-1.0 -1.0
      -1.0  1.0
-     1.0  1.0
-     1.0 -1.0]
+      1.0  1.0
+      1.0 -1.0]
     :mesh/indices
     [0 1 2 0 2 3]
 
@@ -29,8 +30,8 @@
 
     :mesh/vertices
     [-1.0 -1.0 0.0 1.0 0.0 0.0
-     0.0  1.0 0.0 0.0 1.0 0.0
-     1.0 -1.0 0.0 0.0 0.0 1.0]
+      0.0  1.0 0.0 0.0 1.0 0.0
+      1.0 -1.0 0.0 0.0 0.0 1.0]
     :mesh/indices
     [0 1 2]
 
@@ -43,13 +44,13 @@
 (def texture
   (entity/make
    {:entity/name "Texture"
-    :entity/enabled? true
+    ;; :entity/enabled? true
 
     :mesh/vertices
     [ 1.0  1.0 0.0 1.0 1.0
      -1.0  1.0 0.0 0.0 1.0
      -1.0 -1.0 0.0 0.0 0.0
-     1.0 -1.0 0.0 1.0 0.0]
+      1.0 -1.0 0.0 1.0 0.0]
 
     :mesh/indices
     [0 1 2
@@ -61,6 +62,38 @@
       0.0 1.0 0.0
       1.0 0.0 0.0
       1.0 1.0 1.0]
+     :texture/internal-format :gl/rgb
+     :texture/width 2
+     :texture/height 2
+     :glsl/name "tex"}
+
+    :glsl/vertex-source (shader/resource-file "texture.vert")
+    :glsl/fragment-source (shader/resource-file "texture.frag")
+
+    :glsl/attributes
+    [{:glsl/name "point" :glsl/dimensions 3}
+     {:glsl/name "texcoord" :glsl/dimensions 2}]}))
+
+(defn make-noise []
+  (entity/make
+   {:entity/name "Noise"
+    :entity/enabled? true
+
+    :mesh/vertices
+    [ 1.0  1.0 0.0 1.0 1.0
+     -1.0  1.0 0.0 0.0 1.0
+     -1.0 -1.0 0.0 0.0 0.0
+      1.0 -1.0 0.0 1.0 0.0]
+
+    :mesh/indices
+    [0 1 2
+     2 3 0]
+
+    :mesh/texture
+    {:texture/pixels (noise/noise-2d 128 128 3)
+     :texture/internal-format :gl/float
+     :texture/width 128
+     :texture/height 128
      :glsl/name "tex"}
 
     :glsl/vertex-source (shader/resource-file "texture.vert")
@@ -71,7 +104,7 @@
      {:glsl/name "texcoord" :glsl/dimensions 2}]}))
 
 (defn enabled-entities []
-  (filter :entity/enabled? [fractal-canvas rgb-triangle texture]))
+  (filter :entity/enabled? [fractal-canvas rgb-triangle texture (make-noise)]))
 
 (defmethod db/handle-event ::set
   [{:keys [db]} [_ new-entities]]
