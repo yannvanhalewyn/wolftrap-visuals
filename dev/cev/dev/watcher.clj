@@ -1,13 +1,15 @@
 (ns cev.dev.watcher
-  (:require [watchtower.core :as watchtower]))
+  (:require
+   [cev.log :as log]
+   [watchtower.core :as watchtower]))
 
 (defonce watcher (atom nil))
 
 (defn setup-watcher! [dirs callback]
   (if @watcher
-    (println "Watcher already running.")
+    (log/info :watcher/alread-running "Watcher already running.")
     (do
-      (println "[Info]" "Started watching" dirs)
+      (log/info :watcher/watcher "Started watching" dirs)
       (reset!
        watcher
        (watchtower/watcher dirs
@@ -22,5 +24,7 @@
                (println "[Error]" :dev/file-watcher e))))))))))
 
 (defn cancel-watcher! []
-  (future-cancel @watcher)
-  (reset! watcher nil))
+  (if-let [w @watcher]
+    (do (future-cancel w)
+        (reset! watcher nil))
+    (log/info :watcher/not-running "Watcher was not running")))

@@ -1,6 +1,8 @@
 (ns cev.engine.shader
   (:refer-clojure :exclude [use load])
-  (:require [clojure.java.io :as io])
+  (:require
+   [cev.log :as log]
+   [clojure.java.io :as io])
   (:import [org.lwjgl.opengl GL20]))
 
 (defn- make-shader [source shader-type]
@@ -8,7 +10,7 @@
     (GL20/glShaderSource shader source)
     (GL20/glCompileShader shader)
     (if (zero? (GL20/glGetShaderi shader GL20/GL_COMPILE_STATUS))
-      (println (GL20/glGetShaderInfoLog shader 1024))
+      (log/error :shader/compilation-error (GL20/glGetShaderInfoLog shader 1024))
       shader)))
 
 (defn- make-program [vertex-shader fragment-shader]
@@ -18,7 +20,7 @@
     ;; (GL20/glBindAttribLocation program 0 "resolution")
     (GL20/glLinkProgram program)
     (if (zero? (GL20/glGetProgrami program GL20/GL_LINK_STATUS))
-      (println (GL20/glGetProgramInfoLog program 1024))
+      (log/error :shader/linking-error (GL20/glGetProgramInfoLog program 1024))
       program)))
 
 (defn- uniform-location [program name]

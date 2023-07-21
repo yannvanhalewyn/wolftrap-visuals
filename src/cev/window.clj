@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [run!])
   (:require
    [cev.db :as db]
+   [cev.log :as log]
    [cev.midi :as midi]
    [cev.particle :as particle]
    [cev.entities :as entities]
@@ -49,7 +50,7 @@
       (when error
         ;; Also dispatch error so we can dissoc the failed entity
         ;; This makes me think interceptors might be worth it.
-        (println "[ERROR]" error))
+        (log/error :gl/handler-error error))
       (doseq [event events]
         (db/dispatch! event)))))
 

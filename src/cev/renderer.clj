@@ -1,6 +1,7 @@
 (ns cev.renderer
   (:require
    [cev.db :as db]
+   [cev.log :as log]
    [cev.engine.renderer :as gl.renderer]
    [medley.core :as m]))
 
@@ -17,7 +18,7 @@
   which is why there is some orchestration with queues and events involved in
   order to run this code."
   [[action & params]]
-  (println ::action action)
+  (log/info :gl/action action)
   (case action
     :gl/load-renderer
     (let [entity (first params)]

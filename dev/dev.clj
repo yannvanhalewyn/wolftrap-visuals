@@ -16,6 +16,10 @@
 (defn stop-shader-refresher! []
   (watcher/cancel-watcher!))
 
+(defn reload-shader-refresher! []
+  (stop-shader-refresher!)
+  (start-shader-refresher!))
+
 (comment
   (start-shader-refresher!)
   (stop-shader-refresher!)

@@ -1,5 +1,6 @@
 (ns cev.engine.renderer
   (:require
+   [cev.log :as log]
    [cev.engine.math :as math]
    [cev.engine.shader :as shader])
   (:import
@@ -27,7 +28,7 @@
             attr-location (GL20/glGetAttribLocation program (:glsl/name attr))]
 
         (when (= attr-location -1)
-          (println "ERROR: could not find attribute " (:glsl/name attr)))
+          (log/error :gl/shader "could not find attribute" (:glsl/name attr)))
         (GL20/glVertexAttribPointer
          attr-location dimensions GL11/GL_FLOAT false
          (* stride Float/BYTES) (* offset Float/BYTES))
@@ -102,9 +103,11 @@
           idx (bind-indices indices)
           tex (when texture
                 (load-texture program texture))]
-      (println
-       (format "Compiled entity %s, program-id: %d | vao: %d | vertex count: %d"
-               (:entity/id entity) program vao (count indices)))
+      (log/info
+       :renderer/compiled
+       (format
+        "Compiled entity %s, program-id: %d | vao: %d | vertex count: %d"
+        (:entity/id entity) program vao (count indices)))
       (GL30/glBindVertexArray 0)
       {:gl/id (random-uuid)
        :gl/program program
@@ -117,14 +120,14 @@
 (defn destroy!
   "Cleanes up a renderer by deleting all OpenGL buffers, textures and shaders"
   [renderer]
-  (println "[Info]" "Destroying renderer" renderer)
   (GL15/glDeleteBuffers (:gl/vbo renderer))
   (GL15/glDeleteBuffers (:gl/idx renderer))
   (when-let [tex (:gl/tex renderer)]
     (GL11/glBindTexture GL11/GL_TEXTURE_2D 0)
     (GL11/glDeleteTextures tex))
   (GL30/glDeleteVertexArrays (:gl/vao renderer))
-  (shader/delete! (:gl/program renderer)))
+  (shader/delete! (:gl/program renderer))
+  (log/info :renderer/destroyed renderer))
 
 (defn bind-uniform-1f
   "Binds a vec2 uniform to the renderer's shader"

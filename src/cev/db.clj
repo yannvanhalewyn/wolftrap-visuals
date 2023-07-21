@@ -1,7 +1,8 @@
 (ns cev.db
   (:refer-clojure :exclude [read])
   (:require
-    [cev.db :as db]))
+    [cev.db :as db]
+    [cev.log :as log]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FX
@@ -11,7 +12,7 @@
 (defn- execute-effect! [[effect-key arg]]
   (if-let [f (get @fx effect-key)]
     (f arg)
-    (println "ERROR: unknown effect" effect-key)))
+    (log/error :db/unknown-effect "unknown effect" effect-key)))
 
 (defn reg-fx [key f]
   (swap! fx assoc key f))
@@ -37,10 +38,10 @@
 
 (defmethod handle-event :default
   [_ [event-name]]
-  (println "Error: Unknown event" event-name))
+  (log/error :db/unknown-event-handler "Unknown event" event-name))
 
 (defn dispatch! [event]
-  (println :db/event (first event))
+  (log/info :db/event (first event))
   (let [coeffects (reduce (fn [cofx interceptor]
                             ((::before interceptor) cofx))
                           {} (vals @interceptors))
@@ -61,7 +62,7 @@
 
 (defmethod read :default
   [_ [sub-name]]
-  (println "Error: Unknown subscription" sub-name))
+  (log/error :db/unknown-subscription "Unknown subscription" sub-name))
 
 (defn subscribe [query]
   (read @db query))

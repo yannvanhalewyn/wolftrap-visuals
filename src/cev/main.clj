@@ -3,7 +3,9 @@
   (:require
    [cev.db :as db]
    [cev.window :as window]
-   [cev.midi :as midi])
+   [cev.midi :as midi]
+   [cev.log :as log])
+
   (:import
    [org.lwjgl.glfw GLFW]))
 
@@ -11,7 +13,7 @@
   (try
     (window/run! width height "Wolftrap Visuals")
     (catch Exception e
-      (println "FATAL" e)
+      (log/error :error/fatal e)
       (System/exit -1))
     (finally
       (GLFW/glfwTerminate)

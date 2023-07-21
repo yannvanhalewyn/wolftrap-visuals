@@ -1,4 +1,6 @@
 (ns cev.engine.window
+  (:require
+   [cev.log :as log])
   (:import
    [org.lwjgl BufferUtils]
    [org.lwjgl.glfw GLFW GLFWErrorCallback GLFWKeyCallback]
@@ -21,7 +23,7 @@
 (defn init
   [{::keys [width height title key-callback]}]
   ;; Technically this callback was .free'd up before exiting, not sure if necessary
-  (println "Initializing GLFW window")
+  (log/info :window/init "Initializing GLFW window")
   (GLFW/glfwSetErrorCallback (GLFWErrorCallback/createPrint System/err))
 
   (when-not (GLFW/glfwInit)
@@ -54,7 +56,7 @@
       (GLFW/glfwShowWindow window))
 
     (GL/createCapabilities)
-    (println "OpenGL version:" (GL11/glGetString GL11/GL_VERSION))
+    (log/info :window/gl-version "OpenGL version:" (GL11/glGetString GL11/GL_VERSION))
 
     (GL11/glEnable GL11/GL_DEPTH_TEST)
     (GL11/glEnable GL11/GL_BLEND)
