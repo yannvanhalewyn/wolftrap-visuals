@@ -35,8 +35,11 @@
     (when (and vertex-shader fragment-shader)
       (make-program vertex-shader fragment-shader))))
 
-(defn use! [program]
+(defn enable! [program]
   (GL20/glUseProgram program))
+
+(defn disable! []
+  (GL20/glUseProgram 0))
 
 (defn delete! [program]
   (GL20/glDeleteProgram program))

@@ -23,3 +23,7 @@ When there is an issue with startup, or you want to develop something without th
 ``` sh
 bb repl --no-window
 ```
+
+## Contributions
+
+It's not a released engine (yet?), but if you get this to work on another infrastructure than Apple Intel, please submit a PR with your changes. I could collaborate to integrate the changes.

@@ -77,7 +77,7 @@
 (defn make-noise []
   (entity/make
    {:entity/name "Noise"
-    :entity/enabled? true
+    ;; :entity/enabled? true
 
     :mesh/vertices
     [ 1.0  1.0 0.0 1.0 1.0
@@ -118,9 +118,15 @@
                   (for [old-gl-entity old-gl-entities]
                     [:gl/destroy-entity old-gl-entity]))}))
 
+(defmethod db/handle-event ::add
+  [{:keys [db]} [_ entity]]
+  {:db (assoc-in db [:db/entities (:entity/id entity)] entity)
+   :gl/enqueue [[:gl/compile-entity entity]]})
+
 (defmethod db/handle-event ::clear
   [{:keys [db]} _]
-  {:gl/enqueue (for [gl-entity (vals (:db/gl-entities db))]
+  {:db (dissoc db :db/entities)
+   :gl/enqueue (for [gl-entity (vals (:db/gl-entities db))]
                  [:gl/destroy-entity gl-entity])})
 
 (defmethod db/handle-event :gl/loaded-gl-entity

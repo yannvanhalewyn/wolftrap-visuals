@@ -6,3 +6,6 @@
   ([min max] (-> (Math/random)
                  (* (- max min))
                  (+ min))))
+
+(def x first)
+(def y second)

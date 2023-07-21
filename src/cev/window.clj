@@ -2,11 +2,10 @@
   (:refer-clojure :exclude [run!])
   (:require
    [cev.db :as db]
+   [cev.particle :as particle]
    [cev.entities :as entities]
    [cev.engine.mesh :as mesh]
-   [cev.engine.shader :as shader]
-   [cev.engine.window :as window]
-   [cev.midi :as midi])
+   [cev.engine.window :as window])
   (:import
    [clojure.lang PersistentQueue]
    [org.lwjgl.glfw GLFW]))
@@ -27,7 +26,6 @@
 (defn- exec-messages [messages]
   (loop [[[action & params] & other-messages] messages
          events []]
-
     (when action (println :gl/action action))
 
     (if action
@@ -62,6 +60,8 @@
   (when-let [messages (seq (popall!))]
     (let [[events error] (exec-messages messages)]
       (when error
+        ;; Also dispatch error so we can dissoc the failed entity
+        ;; This makes me think interceptors might be worth it.
         (println error))
       (doseq [event events]
         (db/dispatch! event)))))
@@ -75,7 +75,9 @@
       (window/set-should-close! window true)
 
       GLFW/GLFW_KEY_R
-      (db/dispatch! [::entities/set (entities/enabled-entities)])
+      ;; (db/dispatch! [::entities/set (entities/enabled-entities)])
+      (do (db/dispatch! [::entities/clear])
+          (db/dispatch! [::particle/init 3]))
 
       nil)))
 
@@ -83,17 +85,23 @@
   (let [[width height] (window/get-size window)]
     (window/draw-frame!
      window
-     (doseq [[_entity gl-entity] (db/subscribe [::entities/all])]
+     #_(doseq [[_entity gl-entity] (db/subscribe [::entities/all])]
        (when-let [{:keys [:gl/program]} gl-entity]
          (shader/uniform-2f program "resolution" width height)
          (shader/uniform-1f program "iterations" (db/subscribe [::midi/cc-value 72 [1.0 20.0]]))
          (shader/uniform-1f program "complexity" (db/subscribe [::midi/cc-value 79 [0.0 1.0]]))
          (shader/uniform-1f program "brightness" (db/subscribe [::midi/cc-value 91 [0.01 1.0]]))
          (shader/uniform-1f program "time" (GLFW/glfwGetTime))
-         (mesh/draw! gl-entity))))))
+         (mesh/draw! gl-entity)))
+     (let [[particles renderer] (db/subscribe [::particle/particles])]
+       (mesh/batch
+        renderer
+        (doseq [particle particles]
+          (mesh/bind-uniform-2f renderer "position" (:particle/position particle))
+          (mesh/draw-one! renderer)))))))
 
 (defn make-interceptor [window]
-  {::db/inject-effect
+  {::db/before
    (fn [cofx]
      (let [[width height] (window/get-size window)]
        (assoc cofx
@@ -105,7 +113,8 @@
 ;; Running
 
 (defn run! [width height title]
-  (db/dispatch! [::entities/set (entities/enabled-entities)])
+  ;; (db/dispatch! [::entities/set (entities/enabled-entities)])
+  (db/dispatch! [::particle/init 3])
   (window/with-window [window {::window/width width
                                ::window/height height
                                ::window/title title

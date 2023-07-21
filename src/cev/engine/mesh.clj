@@ -1,5 +1,7 @@
 (ns cev.engine.mesh
-  (:require [cev.engine.shader :as shader])
+  (:require
+   [cev.engine.math :as math]
+   [cev.engine.shader :as shader])
   (:import
    [org.lwjgl BufferUtils]
    [org.lwjgl.opengl GL11 GL12 GL13 GL15 GL20 GL30]))
@@ -122,10 +124,25 @@
   (GL30/glDeleteVertexArrays (:gl/vao gl-entity))
   (shader/delete! (:gl/program gl-entity)))
 
-(defn draw! [gl-entity]
-  (shader/use! (:gl/program gl-entity))
-  (GL30/glBindVertexArray (:gl/vao gl-entity))
-  (when-let [tex (:gl/tex gl-entity)]
-    (GL11/glBindTexture GL11/GL_TEXTURE_2D tex))
-  (GL11/glDrawElements GL11/GL_TRIANGLES (:gl/vertex-count gl-entity) GL11/GL_UNSIGNED_INT 0)
-  (GL30/glBindVertexArray 0))
+(defn bind-uniform-2f [renderer attr-name v]
+  (shader/uniform-2f (:gl/program renderer) attr-name (math/x v) (math/y v)))
+
+(defn mount! [renderer]
+  (shader/enable! (:gl/program renderer))
+  (GL30/glBindVertexArray (:gl/vao renderer))
+  (when-let [tex (:gl/tex renderer)]
+    (GL11/glBindTexture GL11/GL_TEXTURE_2D tex)))
+
+(defmacro batch [renderer & body]
+  `(do (mount! ~renderer)
+       ~@body
+       (shader/disable!)
+       (GL30/glBindVertexArray 0)))
+
+(defn draw-one! [renderer]
+  ;; Use GL11/GL_TRIANGLE_STRIP for lines I guess
+  (GL11/glDrawElements
+   GL11/GL_TRIANGLES (:gl/vertex-count renderer) GL11/GL_UNSIGNED_INT 0))
+
+(defn draw! [renderer]
+  (batch renderer (draw-one! renderer)))

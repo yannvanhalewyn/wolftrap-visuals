@@ -1,5 +1,7 @@
 (ns cev.db
-  (:refer-clojure :exclude [read]))
+  (:refer-clojure :exclude [read])
+  (:require
+    [cev.db :as db]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FX
@@ -26,7 +28,7 @@
 
 (reg-fx :db #(reset! db %))
 
-(reg-interceptor :db {::inject-effect #(assoc % :db @db)})
+(reg-interceptor :db {::before #(assoc % :db @db)})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Event handlers
@@ -40,11 +42,17 @@
 (defn dispatch! [event]
   (println :db/event (first event))
   (let [coeffects (reduce (fn [cofx interceptor]
-                            ((::inject-effect interceptor) cofx))
+                            ((::before interceptor) cofx))
                           {} (vals @interceptors))
         effects (handle-event coeffects event)]
     (doseq [effect effects]
       (execute-effect! effect))))
+
+(reg-fx
+ :dispatch
+ (fn [events]
+   (doseq [event events]
+     (db/dispatch! event))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Subscriptions
