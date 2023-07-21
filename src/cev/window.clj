@@ -64,7 +64,7 @@
       (window/set-should-close! window true)
 
       GLFW/GLFW_KEY_R
-      (if @toggle
+      (if false #_@toggle
         (do (db/dispatch! [::particle/clear])
             (db/dispatch! [::renderer/set-entities (entities/enabled-entities)])
             (swap! toggle not))
@@ -98,9 +98,11 @@
            (gl.renderer/batch
             renderer
             (doseq [particle particles]
-              (gl.renderer/bind-uniform-2f renderer "position" (:particle/position particle))
+              (gl.renderer/bind-uniform-2f renderer "resolution" [width height])
+              (gl.renderer/bind-uniform-2f renderer "position" [0 0] #_(:particle/position particle))
+              (gl.renderer/bind-uniform-1f renderer "size" 30)
               (gl.renderer/draw-one! renderer)))
-           (println "NO RENDERER!")))))))
+           #_(println "NO RENDERER!")))))))
 
 (defn make-interceptor [window]
   {::db/before
