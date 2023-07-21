@@ -56,7 +56,10 @@
       (doseq [event events]
         (db/dispatch! event)))))
 
-(def toggle (atom false))
+(defn populate! []
+  ;; (db/dispatch! [::renderer/set-entities [entities/texture entities/texture2]])
+  (db/dispatch! [::particle/init 1000])
+  )
 
 (defn- key-callback [window key scancode action mods]
   ;; (println "key-event" :key key :scancode scancode :action action :mods mods)
@@ -67,13 +70,7 @@
       (window/set-should-close! window true)
 
       GLFW/GLFW_KEY_R
-      (if false #_@toggle
-        (do (db/dispatch! [::particle/clear])
-            (db/dispatch! [::renderer/set-entities (entities/enabled-entities)])
-            (swap! toggle not))
-        (do (db/dispatch! [::particle/clear])
-            (db/dispatch! [::particle/init 3])
-            (swap! toggle not)))
+      (populate!)
 
       nil)))
 
@@ -120,8 +117,7 @@
 ;; Running
 
 (defn run! [width height title]
-  ;; (db/dispatch! [::entities/set (entities/enabled-entities)])
-  (db/dispatch! [::particle/init 3])
+  (populate!)
   (window/with-window [window {::window/width width
                                ::window/height height
                                ::window/title title
