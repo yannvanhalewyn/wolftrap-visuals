@@ -144,6 +144,9 @@
   [renderer]
   (shader/enable! (:gl/program renderer))
   (GL30/glBindVertexArray (:gl/vao renderer))
+  (GL11/glEnable GL11/GL_BLEND)
+  (GL11/glBlendFunc GL11/GL_SRC_ALPHA GL11/GL_ONE)
+  (GL11/glDepthMask false)
   (when-let [tex (:gl/tex renderer)]
     (GL11/glBindTexture GL11/GL_TEXTURE_2D tex)))
 
