@@ -3,7 +3,8 @@
    [cev.db :as db]
    [cev.log :as log]
    [cev.engine.renderer :as gl.renderer]
-   [medley.core :as m]))
+   [medley.core :as m]
+   [cev.util.ansi :as ansi]))
 
 (defn get-renderer [db renderer-id]
   (some
@@ -18,7 +19,7 @@
   which is why there is some orchestration with queues and events involved in
   order to run this code."
   [[action & params]]
-  (log/info :gl/action action)
+  (log/info :gl/action (ansi/bold (ansi/cyan action)))
   (case action
     :gl/load-renderer
     (let [entity (first params)]

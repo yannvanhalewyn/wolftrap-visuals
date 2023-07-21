@@ -28,7 +28,7 @@
             attr-location (GL20/glGetAttribLocation program (:glsl/name attr))]
 
         (when (= attr-location -1)
-          (log/error :gl/shader "could not find attribute" (:glsl/name attr)))
+          (log/error :gl/shader "Could not find attribute" (:glsl/name attr)))
         (GL20/glVertexAttribPointer
          attr-location dimensions GL11/GL_FLOAT false
          (* stride Float/BYTES) (* offset Float/BYTES))

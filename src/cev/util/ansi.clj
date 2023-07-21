@@ -6,10 +6,11 @@
 
 (def ^:private DEFAULT "\033[0m")
 
-(defn- make [ansi s]
+(def ^:private make
   (if supported?
-    (str ansi s DEFAULT)
-    s))
+    (fn [ansi s]
+      (str ansi s DEFAULT))
+    identity))
 
 (defn bold [s]
   (make "\033[1m" s))

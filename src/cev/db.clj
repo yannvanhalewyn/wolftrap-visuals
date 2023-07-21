@@ -1,8 +1,9 @@
 (ns cev.db
   (:refer-clojure :exclude [read])
   (:require
-    [cev.db :as db]
-    [cev.log :as log]))
+   [cev.util.ansi :as ansi]
+   [cev.db :as db]
+   [cev.log :as log]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FX
@@ -40,8 +41,13 @@
   [_ [event-name]]
   (log/error :db/unknown-event-handler "Unknown event" event-name))
 
+(def ^:private verbose false)
+
 (defn dispatch! [event]
-  (log/info :db/event (first event))
+  (log/info :db/event (ansi/bold (ansi/yellow (first event)))
+            (when verbose (rest event)))
+  (when (nil? event)
+    (throw (ex-info "Empty event" {:event event})))
   (let [coeffects (reduce (fn [cofx interceptor]
                             ((::before interceptor) cofx))
                           {} (vals @interceptors))

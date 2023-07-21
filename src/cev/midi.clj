@@ -3,7 +3,8 @@
   https://stackoverflow.com/questions/51013510/receive-midi-input-with-javax-sound-midi
   "
   (:require
-   [cev.db :as db])
+   [cev.db :as db]
+   [cev.log :as log])
   (:import
    [javax.sound.midi MidiSystem]
    [javax.sound.midi MidiMessage]
@@ -38,16 +39,16 @@
         ;; (doseq [transmitter (.getTransmitters device)]
         ;;   (println transmitter))
         (try
-          (println "Adding MIDI listener to" (.. device getDeviceInfo getName))
+          (log/info :midi/add-listener "Adding MIDI listener to" (.. device getDeviceInfo getName))
           (let [transmitter (.getTransmitter device)]
             (.setReceiver transmitter receiver))
           (.open device)
           (catch MidiUnavailableException e
-            (println "Error:" (str device-info) (.getMessage e))))))))
+            (log/error :midi/midi-unavailable (str device-info) (.getMessage e))))))))
 
 (defmethod db/handle-event ::event-received
   [{:keys [db]} [_ msg]]
-  (println "MIDI" msg)
+  (log/info :midi/message-received msg)
   {:db (assoc-in db [::midi-cc (:control msg)] (:value msg))})
 
 (defmethod db/read ::cc-value
