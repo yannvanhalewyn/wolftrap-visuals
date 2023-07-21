@@ -6,13 +6,12 @@ out mediump vec4 fragColor;
 float border = 0.03;
 float edge = 0.10;
 
+vec3 tint = vec3(141.0 / 256., 22.0 / 256.0, 196.0 / 256.0);
+
 void main()
 {
-  if (abs(fragUV.x) > 1 - border ||
-      abs(fragUV.y) > 1 - border ||
-      abs(abs(fragUV.x) - abs(fragUV.y)) > 1 - edge) {
-    fragColor = vec4(0.2, 0.7, 0.3, 1.0);
-  } else {
-    fragColor = vec4(1.4, 0.1, 0.8, 1.0);
-  }
+  float d = length(fragUV);
+  d = smoothstep(0.1, 0.999, 1 - d);
+
+  fragColor = vec4(tint * d, 1.0);
 }

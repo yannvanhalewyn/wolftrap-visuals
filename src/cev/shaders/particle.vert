@@ -9,9 +9,13 @@ uniform float size;
 
 void main()
 {
-  vec2 uv2 = uv;
-  uv2.x *= resolution.y / resolution.x;
+  vec2 screenUV = uv;
+  // Make a perfect square
+  screenUV.x *= resolution.y / resolution.x;
 
-  gl_Position = vec4(position + uv2 / resolution.x * size, 0.0, 1.0);
+  // Scale the quad to the size in pixels
+  screenUV *= size / resolution.x;
+
+  gl_Position = vec4(position + screenUV, 0.0, 1.0);
   fragUV = uv;
 }

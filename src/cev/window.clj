@@ -99,8 +99,8 @@
             renderer
             (doseq [particle particles]
               (gl.renderer/bind-uniform-2f renderer "resolution" [width height])
-              (gl.renderer/bind-uniform-2f renderer "position" [0 0] #_(:particle/position particle))
-              (gl.renderer/bind-uniform-1f renderer "size" 30)
+              (gl.renderer/bind-uniform-2f renderer "position" (:particle/position particle))
+              (gl.renderer/bind-uniform-1f renderer "size" 300)
               (gl.renderer/draw-one! renderer)))
            #_(println "NO RENDERER!")))))))
 
