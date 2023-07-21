@@ -2,16 +2,15 @@
   (:require
    [dev]
    [cev.main :as main]
-   [clojure.java.io :as io]
+   [clojure.string :as str]
    [nrepl.server :as nrepl]
    [cider.nrepl]))
 
 (set! *print-namespace-maps* false)
 
 (defn -main [& args]
-  (let [port 7888
+  (let [port (Integer/parseInt (str/trim (slurp ".nrepl-port")))
         flag? (set args)]
-    (spit ".nrepl-port" port)
     (nrepl/start-server :port port :handler cider.nrepl/cider-nrepl-handler)
     (println "nREPL started on port" port)
 
@@ -19,6 +18,4 @@
       (dev/start-shader-refresher!))
 
     (when-not (flag? "--no-window")
-      (apply main/-main args))
-
-    (io/delete-file ".nrepl-port")))
+      (apply main/-main args))))
