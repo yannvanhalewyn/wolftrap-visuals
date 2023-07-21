@@ -14,6 +14,11 @@
 (defn reg-fx [key f]
   (swap! fx assoc key f))
 
+(defonce interceptors (atom {}))
+
+(defn reg-interceptor [k interceptor]
+  (swap! interceptors assoc k interceptor))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; DB
 
@@ -21,6 +26,7 @@
 
 (reg-fx :db #(reset! db %))
 
+(reg-interceptor :db {::inject-effect #(assoc % :db @db)})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Event handlers
@@ -32,7 +38,10 @@
   (println "Error: Unknown event" event-name))
 
 (defn dispatch! [event]
-  (let [coeffects {:db @db}
+  (println :db/event (first event))
+  (let [coeffects (reduce (fn [cofx interceptor]
+                            ((::inject-effect interceptor) cofx))
+                          {} (vals @interceptors))
         effects (handle-event coeffects event)]
     (doseq [effect effects]
       (execute-effect! effect))))

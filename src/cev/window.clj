@@ -92,6 +92,15 @@
          (shader/uniform-1f program "time" (GLFW/glfwGetTime))
          (mesh/draw! gl-entity))))))
 
+(defn make-interceptor [window]
+  {::db/inject-effect
+   (fn [cofx]
+     (let [[width height] (window/get-size window)]
+       (assoc cofx
+         :gl/window window
+         ::window/width width
+         ::window/height height)))})
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Running
 
@@ -101,6 +110,7 @@
                                ::window/height height
                                ::window/title title
                                ::window/key-callback key-callback}]
+    (db/reg-interceptor :gl/window (make-interceptor window))
     (while (not (window/should-close? window))
       (handle-queue!)
       (draw! window)
