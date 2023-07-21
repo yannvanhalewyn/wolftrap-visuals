@@ -128,9 +128,11 @@
                                ::window/key-callback key-callback}]
     (db/reg-interceptor :gl/window (make-interceptor window))
 
-    (let [fps-timer (timer/start)]
+    (let [fps-timer (timer/start :window/frames)
+          every-second (timer/throttle fps-timer 5)]
       (while (not (window/should-close? window))
-        (log/info :fps (timer/fps fps-timer))
+        (when (timer/throttled? fps-timer every-second)
+          (log/info :fps (timer/fps fps-timer)))
         (handle-queue!)
         (draw! window)
         (window/poll-events!)
