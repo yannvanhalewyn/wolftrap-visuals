@@ -32,7 +32,7 @@
     (merge throttles (into {} outdated))
     throttles))
 
-(defn throttle
+(defn add-throttle!
   "Adds a throttle marker to the timer. This is useful if you want to use the
   timer to execute something once for every time period.
 
@@ -41,9 +41,17 @@
   (swap! timer assoc-in [::throttles threshold] (::curr-time @timer))
   threshold)
 
-(defn throttled? [timer threshold]
-  (let [{::keys [throttles curr-time]} @timer]
-    (= (get throttles threshold) curr-time)))
+(defn throttled?
+  "Checks if the current frame is the one where the time got throttled. Must be
+  set up with `add-throttle!` before use.
+
+  Can be used to have a quick dev throttle without providing a throttle. It will
+  then pick a random configured throttle."
+  ([timer]
+   (throttled? timer (key (first (::throttles @timer)))))
+  ([timer throttle]
+   (let [{::keys [throttles curr-time]} @timer]
+     (= (get throttles throttle) curr-time))))
 
 (defn tick
   ([timer]

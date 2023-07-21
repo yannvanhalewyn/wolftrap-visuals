@@ -58,8 +58,7 @@
 
 (defn populate! []
   ;; (db/dispatch! [::renderer/set-entities [entities/texture entities/texture2]])
-  (db/dispatch! [::particle/init 1000])
-  )
+  (db/dispatch! [::particle/init 50]))
 
 (defn- key-callback [window key scancode action mods]
   ;; (println "key-event" :key key :scancode scancode :action action :mods mods)
@@ -74,7 +73,7 @@
 
       nil)))
 
-(defn- draw! [window]
+(defn- draw! [window timer]
   (let [[width height] (window/get-size window)]
     (window/draw-frame!
      window
@@ -93,6 +92,8 @@
 
      ;; Particles renderer
      (let [[particles renderer] (db/subscribe [::particle/particles])]
+       (when (timer/throttled? timer)
+         (log/debug :rendering :particles (count particles)))
        (when (seq particles)
          (if renderer
            (gl.renderer/batch
@@ -100,9 +101,10 @@
             (doseq [particle particles]
               (gl.renderer/bind-uniform-2f renderer "resolution" [width height])
               (gl.renderer/bind-uniform-2f renderer "position" (:particle/position particle))
-              (gl.renderer/bind-uniform-1f renderer "size" 300)
-              (gl.renderer/draw-one! renderer)))
-           #_(println "NO RENDERER!")))))))
+              (gl.renderer/bind-uniform-1f renderer "size" 30)
+              (gl.renderer/draw1! renderer)))
+           (when (timer/throttled? timer)
+             (log/error :gl/render-error "No renderer"))))))))
 
 (defn make-interceptor [window]
   {::db/before
@@ -125,12 +127,12 @@
     (db/reg-interceptor :gl/window (make-interceptor window))
 
     (let [fps-timer (timer/start :window/frames)
-          every-second (timer/throttle fps-timer 5)]
+          throttle (timer/add-throttle! fps-timer 5)]
       (while (not (window/should-close? window))
-        (when (timer/throttled? fps-timer every-second)
+        (when (timer/throttled? fps-timer throttle)
           (log/info :fps (timer/fps fps-timer)))
         (handle-queue!)
-        (draw! window)
+        (draw! window fps-timer)
         (window/poll-events!)
         (timer/tick fps-timer)))
     (db/dispatch! [::particle/clear])))
