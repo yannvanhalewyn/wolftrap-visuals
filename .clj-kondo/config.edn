@@ -1,1 +1,2 @@
-{:lint-as {cev.engine.window/with-window clojure.core/let}}
+{:lint-as {cev.engine.window/with-window clojure.core/let
+           watchtower.core/watcher clojure.core/->}}

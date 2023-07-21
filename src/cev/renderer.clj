@@ -37,6 +37,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Loading entities
 
+(defmethod db/handle-event ::refresh
+  [{:keys [db]} _]
+  {:dispatch [[::set-entities (vals (:db/entities db))]]})
+
 (defmethod db/handle-event ::set-entities
   [{:keys [db]} [_ new-entities]]
   (let [renderers (vals (::renderers db))]

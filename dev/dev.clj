@@ -1,12 +1,26 @@
 (ns dev
   (:require
+   [sc.api]
    [cev.db :as db]
    [cev.midi :as midi]
    [cev.particle :as particle]
    [cev.renderer :as renderer]
-   [cev.entities :as entities]))
+   [cev.entities :as entities]
+   [cev.dev.watcher :as watcher]))
+
+(defn start-shader-refresher! []
+  (watcher/setup-watcher!
+   ["src/cev/shaders/"]
+   (fn [_files] (db/dispatch! [::renderer/refresh]))))
+
+(defn stop-shader-refresher! []
+  (watcher/cancel-watcher!))
 
 (comment
+  (start-shader-refresher!)
+  (stop-shader-refresher!)
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; MIDI
