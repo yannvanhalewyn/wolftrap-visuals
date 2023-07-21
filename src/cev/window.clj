@@ -8,6 +8,7 @@
    [cev.entities :as entities]
    [cev.renderer :as renderer]
    [cev.engine.renderer :as gl.renderer]
+   [cev.engine.timer :as timer]
    [cev.engine.window :as window])
   (:import
    [clojure.lang PersistentQueue]
@@ -22,7 +23,8 @@
   (first (reset-vals! queue (PersistentQueue/EMPTY))))
 
 (defn- enqueue! [messages]
-  (swap! queue #(apply conj % messages)))
+  (when seq
+    (swap! queue #(apply conj % messages))))
 
 (db/reg-fx :gl/enqueue enqueue!)
 
@@ -125,8 +127,12 @@
                                ::window/title title
                                ::window/key-callback key-callback}]
     (db/reg-interceptor :gl/window (make-interceptor window))
-    (while (not (window/should-close? window))
-      (handle-queue!)
-      (draw! window)
-      (window/poll-events!))
+
+    (let [fps-timer (timer/start)]
+      (while (not (window/should-close? window))
+        (log/info :fps (timer/fps fps-timer))
+        (handle-queue!)
+        (draw! window)
+        (window/poll-events!)
+        (timer/tick fps-timer)))
     (db/dispatch! [::particle/clear])))
