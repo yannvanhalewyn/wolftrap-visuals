@@ -1,7 +1,7 @@
 #version 410 core
 
 in mediump vec2 pos;
-// in mediump vec2 texcoord;
+
 out mediump vec2 UV;
 
 void main(void)

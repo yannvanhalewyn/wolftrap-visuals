@@ -50,4 +50,5 @@
 
 (defmethod db/read ::particles
   [{::keys [particles] :as db} _]
-  [particles (renderer/get-renderer db ::renderer)])
+  (when particles
+    [particles (renderer/get-renderer db ::renderer)]))

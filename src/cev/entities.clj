@@ -9,6 +9,7 @@
 (def fractal-canvas
   (entity/make
    {:entity/name "Fractal Canvas"
+    :entity/enabled? true
 
     :mesh/vertices
     [-1.0 -1.0
@@ -125,7 +126,7 @@
 
 (defmethod db/handle-event ::clear
   [{:keys [db]} _]
-  {:db (dissoc db :db/entities)
+  {:db (dissoc db :db/entities :cev.particle/particles)
    :gl/enqueue (for [gl-entity (vals (:db/gl-entities db))]
                  [:gl/destroy-entity gl-entity])})
 

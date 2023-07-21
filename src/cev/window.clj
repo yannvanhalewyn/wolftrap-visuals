@@ -2,8 +2,10 @@
   (:refer-clojure :exclude [run!])
   (:require
    [cev.db :as db]
+   [cev.midi :as midi]
    [cev.particle :as particle]
    [cev.entities :as entities]
+   [cev.engine.shader :as shader]
    [cev.engine.mesh :as mesh]
    [cev.engine.window :as window])
   (:import
@@ -85,20 +87,23 @@
   (let [[width height] (window/get-size window)]
     (window/draw-frame!
      window
-     #_(doseq [[_entity gl-entity] (db/subscribe [::entities/all])]
-       (when-let [{:keys [:gl/program]} gl-entity]
-         (shader/uniform-2f program "resolution" width height)
-         (shader/uniform-1f program "iterations" (db/subscribe [::midi/cc-value 72 [1.0 20.0]]))
-         (shader/uniform-1f program "complexity" (db/subscribe [::midi/cc-value 79 [0.0 1.0]]))
-         (shader/uniform-1f program "brightness" (db/subscribe [::midi/cc-value 91 [0.01 1.0]]))
-         (shader/uniform-1f program "time" (GLFW/glfwGetTime))
-         (mesh/draw! gl-entity)))
+     (doseq [[entity renderer] (db/subscribe [::entities/all])]
+       (when (and renderer (not (contains? entity :gl.renderer/id)))
+         (mesh/batch
+          renderer
+          (mesh/bind-uniform-2f renderer "resolution" [width height])
+          (mesh/bind-uniform-1f renderer "iterations" (db/subscribe [::midi/cc-value 72 [1.0 20.0]]))
+          (mesh/bind-uniform-1f renderer "complexity" (db/subscribe [::midi/cc-value 79 [0.0 1.0]]))
+          (mesh/bind-uniform-1f renderer "brightness" (db/subscribe [::midi/cc-value 91 [0.01 1.0]]))
+          (mesh/bind-uniform-1f renderer "time" (GLFW/glfwGetTime))
+          (mesh/draw-one! renderer))))
      (let [[particles renderer] (db/subscribe [::particle/particles])]
-       (mesh/batch
-        renderer
-        (doseq [particle particles]
-          (mesh/bind-uniform-2f renderer "position" (:particle/position particle))
-          (mesh/draw-one! renderer)))))))
+       (when (seq particles)
+         (mesh/batch
+          renderer
+          (doseq [particle particles]
+            (mesh/bind-uniform-2f renderer "position" (:particle/position particle))
+            (mesh/draw-one! renderer))))))))
 
 (defn make-interceptor [window]
   {::db/before
