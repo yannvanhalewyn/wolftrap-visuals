@@ -1,10 +1,8 @@
 (ns cev.particle
   (:require
-   [cev.entities :as entities]
    [cev.db :as db]
    [cev.engine.entity :as entity]
    [cev.engine.math :as math]
-   [cev.engine.mesh :as gl.renderer]
    [cev.engine.shader :as shader]
    [cev.engine.window :as window]
    [cev.renderer :as renderer]))
@@ -46,7 +44,12 @@
 (defmethod db/handle-event ::init
   [{:keys [db ::window/width ::window/height]} [_ num-particles]]
   {:db (assoc db ::particles (make-particles num-particles width height))
-   :dispatch [[::entities/add (make-entity)]]})
+   :dispatch [[::renderer/add (make-entity)]]})
+
+(defmethod db/handle-event ::clear
+  [{:keys [db]} _]
+  {:db (dissoc db ::particles)
+   :dispatch [[::renderer/clear]]})
 
 (defmethod db/read ::particles
   [{::keys [particles] :as db} _]

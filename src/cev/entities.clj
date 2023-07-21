@@ -1,10 +1,8 @@
 (ns cev.entities
   (:require
-   [cev.db :as db]
    [cev.engine.entity :as entity]
    [cev.engine.shader :as shader]
-   [cev.engine.noise :as noise]
-   [medley.core :as m]))
+   [cev.engine.noise :as noise]))
 
 (def fractal-canvas
   (entity/make
@@ -108,39 +106,3 @@
   "Returns all entities tagged with `:entity/enabled?`"
   []
   (filter :entity/enabled? [fractal-canvas rgb-triangle texture (make-noise)]))
-
-(defmethod db/handle-event ::set
-  [{:keys [db]} [_ new-entities]]
-  (let [old-gl-entities (vals (:db/gl-entities db))]
-    {:db (assoc db :db/entities (m/index-by :entity/id new-entities))
-     :gl/enqueue (concat
-                  (for [new-entity new-entities]
-                    [:gl/compile-entity new-entity])
-                  (for [old-gl-entity old-gl-entities]
-                    [:gl/destroy-entity old-gl-entity]))}))
-
-(defmethod db/handle-event ::add
-  [{:keys [db]} [_ entity]]
-  {:db (assoc-in db [:db/entities (:entity/id entity)] entity)
-   :gl/enqueue [[:gl/compile-entity entity]]})
-
-(defmethod db/handle-event ::clear
-  [{:keys [db]} _]
-  {:db (dissoc db :db/entities :cev.particle/particles)
-   :gl/enqueue (for [gl-entity (vals (:db/gl-entities db))]
-                 [:gl/destroy-entity gl-entity])})
-
-(defmethod db/handle-event :gl/loaded-gl-entity
-  [{:keys [db]} [_ entity-id gl-entity]]
-  {:db (-> db
-           (assoc-in [:db/gl-entities (:gl/id gl-entity)] gl-entity)
-           (assoc-in [:db/entities entity-id :gl/id] (:gl/id gl-entity)))})
-
-(defmethod db/handle-event :gl/destroyed-gl-entity
-  [{:keys [db]} [_ gl-entity-id]]
-  {:db (m/dissoc-in db [:db/gl-entities gl-entity-id])})
-
-(defmethod db/read ::all
-  [{:db/keys [entities gl-entities]} _]
-  (for [entity (vals entities)]
-    [entity (get gl-entities (:gl/id entity))]))

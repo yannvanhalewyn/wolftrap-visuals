@@ -1,10 +1,10 @@
-(ns cev.engine.mesh
+(ns cev.engine.renderer
   (:require
    [cev.engine.math :as math]
    [cev.engine.shader :as shader])
   (:import
    [org.lwjgl BufferUtils]
-   [org.lwjgl.opengl GL11 GL12 GL13 GL15 GL20 GL30]))
+   [org.lwjgl.opengl GL11 GL13 GL15 GL20 GL30]))
 
 (defn buffer-maker [create]
   (fn make-buffer--x [data]
@@ -114,30 +114,48 @@
        :gl/tex tex
        :gl/vertex-count (count indices)})))
 
-(defn destroy! [gl-entity]
-  (println "Deleting mesh" gl-entity)
-  (GL15/glDeleteBuffers (:gl/vbo gl-entity))
-  (GL15/glDeleteBuffers (:gl/idx gl-entity))
-  (when-let [tex (:gl/tex gl-entity)]
+(defn destroy!
+  "Cleanes up a renderer by deleting all OpenGL buffers, textures and shaders"
+  [renderer]
+  (println "[Info]" "Destroying renderer" renderer)
+  (GL15/glDeleteBuffers (:gl/vbo renderer))
+  (GL15/glDeleteBuffers (:gl/idx renderer))
+  (when-let [tex (:gl/tex renderer)]
     (GL11/glBindTexture GL11/GL_TEXTURE_2D 0)
     (GL11/glDeleteTextures tex))
-  (GL30/glDeleteVertexArrays (:gl/vao gl-entity))
-  (shader/delete! (:gl/program gl-entity)))
+  (GL30/glDeleteVertexArrays (:gl/vao renderer))
+  (shader/delete! (:gl/program renderer)))
 
-(defn bind-uniform-2f [renderer attr-name v]
+(defn bind-uniform-1f
+  "Binds a vec2 uniform to the renderer's shader"
+  [renderer attr-name v]
+  (shader/uniform-1f (:gl/program renderer) attr-name v))
+
+(defn bind-uniform-2f
+  "Binds a vec2 uniform to the renderer's shader"
+  [renderer attr-name v]
   (shader/uniform-2f (:gl/program renderer) attr-name (math/x v) (math/y v)))
 
-(defn mount! [renderer]
+(defn mount!
+  "Prepares the renderer for being used"
+  [renderer]
   (shader/enable! (:gl/program renderer))
   (GL30/glBindVertexArray (:gl/vao renderer))
   (when-let [tex (:gl/tex renderer)]
     (GL11/glBindTexture GL11/GL_TEXTURE_2D tex)))
 
-(defmacro batch [renderer & body]
+(defn unmount!
+  "Unmounts the renderer"
+  []
+  (shader/disable!)
+  (GL30/glBindVertexArray 0))
+
+(defmacro batch
+  "Mounts the renderer and executes the body before unmounting."
+  [renderer & body]
   `(do (mount! ~renderer)
        ~@body
-       (shader/disable!)
-       (GL30/glBindVertexArray 0)))
+       (unmount!)))
 
 (defn draw-one! [renderer]
   ;; Use GL11/GL_TRIANGLE_STRIP for lines I guess

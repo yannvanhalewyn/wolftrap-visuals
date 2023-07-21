@@ -5,8 +5,8 @@
    [cev.midi :as midi]
    [cev.particle :as particle]
    [cev.entities :as entities]
-   [cev.engine.shader :as shader]
-   [cev.engine.mesh :as mesh]
+   [cev.renderer :as renderer]
+   [cev.engine.renderer :as gl.renderer]
    [cev.engine.window :as window])
   (:import
    [clojure.lang PersistentQueue]
@@ -26,28 +26,13 @@
 (db/reg-fx :gl/enqueue enqueue!)
 
 (defn- exec-messages [messages]
-  (loop [[[action & params] & other-messages] messages
+  (loop [[[action :as message] & other-messages] messages
          events []]
-    (when action (println :gl/action action))
-
     (if action
-      (case action
-
-        :gl/compile-entity
-        (let [entity (first params)]
-          (if-let [gl-entity (mesh/load! entity)]
-            (recur other-messages
-                   (conj events [:gl/loaded-gl-entity (:entity/id entity) gl-entity]))
-            [events (ex-info "Failed to load entity"
-                             (select-keys entity [:entity/id :entity/name]))]))
-
-        :gl/destroy-entity
-        (let [gl-entity (first params)]
-          (mesh/destroy! gl-entity)
-          (recur other-messages
-                 (conj events [:gl/destroyed-gl-entity (:gl/id gl-entity)])))
-
-        (throw (ex-info "Unknown action" action)))
+      (let [[success-event err-event] (renderer/handle-queue-message! message)]
+        (if success-event
+          (recur other-messages (conj events success-event))
+          [events err-event]))
       [events nil])))
 
 (defn- handle-queue!
@@ -64,9 +49,11 @@
       (when error
         ;; Also dispatch error so we can dissoc the failed entity
         ;; This makes me think interceptors might be worth it.
-        (println error))
+        (println "[ERROR]" error))
       (doseq [event events]
         (db/dispatch! event)))))
+
+(def toggle (atom false))
 
 (defn- key-callback [window key scancode action mods]
   ;; (println "key-event" :key key :scancode scancode :action action :mods mods)
@@ -77,9 +64,13 @@
       (window/set-should-close! window true)
 
       GLFW/GLFW_KEY_R
-      ;; (db/dispatch! [::entities/set (entities/enabled-entities)])
-      (do (db/dispatch! [::entities/clear])
-          (db/dispatch! [::particle/init 3]))
+      (if @toggle
+        (do (db/dispatch! [::particle/clear])
+            (db/dispatch! [::renderer/set-entities (entities/enabled-entities)])
+            (swap! toggle not))
+        (do (db/dispatch! [::particle/clear])
+            (db/dispatch! [::particle/init 3])
+            (swap! toggle not)))
 
       nil)))
 
@@ -87,23 +78,29 @@
   (let [[width height] (window/get-size window)]
     (window/draw-frame!
      window
-     (doseq [[entity renderer] (db/subscribe [::entities/all])]
+
+     ;; Entity renderer
+     (doseq [[entity renderer] (db/subscribe [::renderer/all])]
        (when (and renderer (not (contains? entity :gl.renderer/id)))
-         (mesh/batch
+         (gl.renderer/batch
           renderer
-          (mesh/bind-uniform-2f renderer "resolution" [width height])
-          (mesh/bind-uniform-1f renderer "iterations" (db/subscribe [::midi/cc-value 72 [1.0 20.0]]))
-          (mesh/bind-uniform-1f renderer "complexity" (db/subscribe [::midi/cc-value 79 [0.0 1.0]]))
-          (mesh/bind-uniform-1f renderer "brightness" (db/subscribe [::midi/cc-value 91 [0.01 1.0]]))
-          (mesh/bind-uniform-1f renderer "time" (GLFW/glfwGetTime))
-          (mesh/draw-one! renderer))))
+          (gl.renderer/bind-uniform-2f renderer "resolution" [width height])
+          (gl.renderer/bind-uniform-1f renderer "iterations" (db/subscribe [::midi/cc-value 72 [1.0 20.0]]))
+          (gl.renderer/bind-uniform-1f renderer "complexity" (db/subscribe [::midi/cc-value 79 [0.0 1.0]]))
+          (gl.renderer/bind-uniform-1f renderer "brightness" (db/subscribe [::midi/cc-value 91 [0.01 1.0]]))
+          (gl.renderer/bind-uniform-1f renderer "time" (GLFW/glfwGetTime))
+          (gl.renderer/draw-one! renderer))))
+
+     ;; Particles renderer
      (let [[particles renderer] (db/subscribe [::particle/particles])]
        (when (seq particles)
-         (mesh/batch
-          renderer
-          (doseq [particle particles]
-            (mesh/bind-uniform-2f renderer "position" (:particle/position particle))
-            (mesh/draw-one! renderer))))))))
+         (if renderer
+           (gl.renderer/batch
+            renderer
+            (doseq [particle particles]
+              (gl.renderer/bind-uniform-2f renderer "position" (:particle/position particle))
+              (gl.renderer/draw-one! renderer)))
+           (println "NO RENDERER!")))))))
 
 (defn make-interceptor [window]
   {::db/before
@@ -129,4 +126,4 @@
       (handle-queue!)
       (draw! window)
       (window/poll-events!))
-    (db/dispatch! [::entities/clear])))
+    (db/dispatch! [::particle/clear])))
