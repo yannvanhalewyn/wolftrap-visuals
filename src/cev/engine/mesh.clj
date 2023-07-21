@@ -54,14 +54,24 @@
     (GL15/glBufferData GL15/GL_ELEMENT_ARRAY_BUFFER  buffer GL15/GL_STATIC_DRAW)
     vbo))
 
+(def ^:private texture-formats
+  {:gl/rgb GL11/GL_RGB
+   :gl/depth-component GL11/GL_DEPTH_COMPONENT})
+
+(defn- get-texture-format [format]
+  (or (get texture-formats format)
+      (throw (ex-info "Unknown texture format" {:texture/format format}))))
+
 (defn- load-texture
-  [program {:keys [:texture/pixels :texture/width :texture/height :glsl/name]}]
+  [program {:texture/keys [pixels width height format] :keys [:glsl/name]}]
   (let [tex (GL11/glGenTextures)
-        pixel-buffer (make-float-buffer pixels)]
+        pixel-buffer (make-float-buffer pixels)
+        texture-format (get-texture-format format)]
     (GL13/glActiveTexture GL13/GL_TEXTURE0)
     (GL11/glBindTexture GL11/GL_TEXTURE_2D tex)
     (GL20/glUniform1i (GL20/glGetUniformLocation program name) 0)
-    (GL11/glTexImage2D GL11/GL_TEXTURE_2D 0 GL11/GL_DEPTH_COMPONENT width height 0 GL12/GL_DEPTH_COMPONENT GL11/GL_FLOAT pixel-buffer)
+    (GL11/glTexImage2D GL11/GL_TEXTURE_2D 0 texture-format width height 0
+                       texture-format GL11/GL_FLOAT pixel-buffer)
     (GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_WRAP_S GL13/GL_CLAMP_TO_EDGE)
     (GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_MIN_FILTER GL11/GL_NEAREST)
     (GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_MAG_FILTER GL11/GL_NEAREST)

@@ -58,17 +58,17 @@
 
     :mesh/texture
     {:texture/pixels
-     [0.0 0.0 1.0
-      0.0 1.0 0.0
-      1.0 0.0 0.0
-      1.0 1.0 1.0]
-     :texture/internal-format :gl/rgb
+     [0.0 0.0 1.0  ;; Blue
+      0.0 1.0 0.0  ;; Green
+      1.0 0.0 0.0  ;; Red
+      1.0 1.0 1.0] ;; White
+     :texture/format :gl/rgb
      :texture/width 2
      :texture/height 2
      :glsl/name "tex"}
 
     :glsl/vertex-source (shader/resource-file "texture.vert")
-    :glsl/fragment-source (shader/resource-file "texture.frag")
+    :glsl/fragment-source (shader/resource-file "texture3.frag")
 
     :glsl/attributes
     [{:glsl/name "point" :glsl/dimensions 3}
@@ -90,20 +90,22 @@
      2 3 0]
 
     :mesh/texture
-    {:texture/pixels (noise/noise-2d 128 128 3)
-     :texture/internal-format :gl/float
+    {:texture/pixels (noise/noise-2d 128 128 2)
+     :texture/format :gl/depth-component
      :texture/width 128
      :texture/height 128
      :glsl/name "tex"}
 
     :glsl/vertex-source (shader/resource-file "texture.vert")
-    :glsl/fragment-source (shader/resource-file "texture.frag")
+    :glsl/fragment-source (shader/resource-file "texture1.frag")
 
     :glsl/attributes
     [{:glsl/name "point" :glsl/dimensions 3}
      {:glsl/name "texcoord" :glsl/dimensions 2}]}))
 
-(defn enabled-entities []
+(defn enabled-entities
+  "Returns all entities tagged with `:entity/enabled?`"
+  []
   (filter :entity/enabled? [fractal-canvas rgb-triangle texture (make-noise)]))
 
 (defmethod db/handle-event ::set

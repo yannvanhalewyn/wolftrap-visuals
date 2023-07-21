@@ -6,7 +6,7 @@
   {:extra-paths ["dev"]
    :extra-deps
    {nrepl/nrepl {:mvn/version "1.0.0"}
-    cider/cider-nrepl {:mvn/version "0.30.0"}
+    cider/cider-nrepl {:mvn/version "0.32.0-alpha1"}
     vvvvalvalval/scope-capture {:mvn/version "0.3.2"}}}
   :thing
   {:extra-deps
