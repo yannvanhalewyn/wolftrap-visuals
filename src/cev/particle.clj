@@ -7,24 +7,32 @@
    [cev.engine.window :as window]
    [cev.renderer :as renderer]))
 
-(defn- make-particles [num-particles width height]
+(defn- make-particle [position velocity size max-age]
+  {:particle/position position
+   :particle/velocity velocity
+   :particle/size size
+   :particle/age 0
+   :particle/max-age max-age})
+
+(defn- make-particles [num-particles _width _height]
   (let [width 1 height 1
         speed 20
         max-age 20]
     (repeatedly
      num-particles
      (fn []
-       {:particle/position [(math/random (- width) width)
-                            (math/random (- height) height)]
-        :particle/velocity [(math/random (- speed) speed)
-                            (math/random (- speed) speed)]
-        :particle/age 0
-        :particle/max-age max-age}))))
+       (make-particle
+        [(math/random (- width) width)
+         (math/random (- height) height)]
+        [(math/random (- speed) speed)
+         (math/random (- speed) speed)]
+        (math/random 10 100)
+        max-age)))))
 
 (defn make-entity []
   (entity/make
    {:entity/name "Particle"
-    :gl.renderer/id ::renderer
+    ::renderer/batch-id ::renderer
 
     :mesh/vertices
     [-1.0 -1.0

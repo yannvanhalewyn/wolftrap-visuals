@@ -8,6 +8,7 @@
    [cev.entities :as entities]
    [cev.renderer :as renderer]
    [cev.engine.renderer :as gl.renderer]
+   [cev.engine.math :as math]
    [cev.engine.timer :as timer]
    [cev.engine.window :as window])
   (:import
@@ -57,8 +58,8 @@
         (db/dispatch! event)))))
 
 (defn populate! []
-  (db/dispatch! [::renderer/set-entities [entities/texture entities/texture2]])
-  #_(db/dispatch! [::particle/init 50]))
+  ;; (db/dispatch! [::renderer/set-entities [entities/texture entities/texture2]])
+  (db/dispatch! [::particle/init 50]))
 
 (defn- key-callback [window key scancode action mods]
   ;; (println "key-event" :key key :scancode scancode :action action :mods mods)
@@ -73,6 +74,11 @@
 
       nil)))
 
+(defn- update! [timer throttle]
+  (when (timer/throttled? timer throttle)
+    (log/info :fps (timer/fps timer)))
+  (handle-queue!))
+
 (defn- draw! [window timer]
   (let [[width height] (window/get-size window)]
     (window/draw-frame!
@@ -80,16 +86,18 @@
 
      ;; Entity renderer
      (doseq [[entity renderer] (db/subscribe [::renderer/all])]
-       (if (and renderer (not (contains? entity :cev.particle/renderer)))
-         (gl.renderer/batch
-          renderer
-          (gl.renderer/bind-uniform-2f renderer "resolution" [width height])
-          (gl.renderer/bind-uniform-1f renderer "iterations" (db/subscribe [::midi/cc-value 72 [1.0 20.0]]))
-          (gl.renderer/bind-uniform-1f renderer "complexity" (db/subscribe [::midi/cc-value 79 [0.0 1.0]]))
-          (gl.renderer/bind-uniform-1f renderer "brightness" (db/subscribe [::midi/cc-value 91 [0.01 1.0]]))
-          (gl.renderer/bind-uniform-1f renderer "time" (GLFW/glfwGetTime))
-          (gl.renderer/draw1! renderer))
-         (log/error :renderer "No renderer")))
+       (when-not (contains? entity :cev.renderer/batch-id)
+         (if renderer
+           (gl.renderer/batch
+            renderer
+            (gl.renderer/bind-uniform-2f renderer "resolution" [width height])
+            (gl.renderer/bind-uniform-1f renderer "iterations" (db/subscribe [::midi/cc-value 72 [1.0 20.0]]))
+            (gl.renderer/bind-uniform-1f renderer "complexity" (db/subscribe [::midi/cc-value 79 [0.0 1.0]]))
+            (gl.renderer/bind-uniform-1f renderer "brightness" (db/subscribe [::midi/cc-value 91 [0.01 1.0]]))
+            (gl.renderer/bind-uniform-1f renderer "time" (GLFW/glfwGetTime))
+            (gl.renderer/draw1! renderer))
+           (when (timer/throttled? timer)
+             (log/error :gl/render-error "No renderer (entity renderer)")))))
 
      ;; Particles renderer
      (let [[particles renderer] (db/subscribe [::particle/particles])]
@@ -102,10 +110,10 @@
             (doseq [particle particles]
               (gl.renderer/bind-uniform-2f renderer "resolution" [width height])
               (gl.renderer/bind-uniform-2f renderer "position" (:particle/position particle))
-              (gl.renderer/bind-uniform-1f renderer "size" 30)
+              (gl.renderer/bind-uniform-1f renderer "size" (:particle/size particle 30))
               (gl.renderer/draw1! renderer)))
            (when (timer/throttled? timer)
-             (log/error :gl/render-error "No renderer"))))))))
+             (log/error :gl/render-error "No renderer (batch renderer)"))))))))
 
 (defn make-interceptor [window]
   {::db/before
@@ -130,9 +138,7 @@
     (let [fps-timer (timer/start :window/frames)
           throttle (timer/add-throttle! fps-timer 5)]
       (while (not (window/should-close? window))
-        (when (timer/throttled? fps-timer throttle)
-          (log/info :fps (timer/fps fps-timer)))
-        (handle-queue!)
+        (update! fps-timer throttle)
         (draw! window fps-timer)
         (window/poll-events!)
         (timer/tick fps-timer)))

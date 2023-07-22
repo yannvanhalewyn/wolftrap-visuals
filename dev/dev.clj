@@ -35,12 +35,12 @@
 
 (defn inspect-db! [db]
   (println (ansi/cyan (str "\n#" :particles)))
-  (doseq [entity (::particle/particles db)]
-    (report-keys entity [:particle/position]))
+  (doseq [entity (take 5 (::particle/particles db))]
+    (report-keys entity [:particle/position :particle/size]))
 
   (println (ansi/cyan (str "\n#" :entities)))
   (doseq [entity (vals (::renderer/entities db))]
-    (report-keys entity [:entity/name :entity/id :gl/id]))
+    (report-keys entity [:entity/name :entity/id :gl/id ::renderer/batch-id]))
 
   (println (ansi/cyan (str "\n# " :renderers)))
   (doseq [renderer (vals (::renderer/renderers db))]
@@ -51,46 +51,48 @@
 
 (comment
 
-(start-shader-refresher!)
-(stop-shader-refresher!)
+  (start-shader-refresher!)
+  (stop-shader-refresher!)
 
-(inspect-db! @db/db)
+  (inspect-db! @db/db)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; MIDI
-
-(db/dispatch! [::midi/event-received {:control 72 :value 1}])
-(db/dispatch! [::midi/event-received {:control 79 :value 50}])
-(db/dispatch! [::midi/event-received {:control 91 :value 60}])
-
-(db/subscribe [::midi/cc-value 72 [10 20]])
+  (db/subscribe [::renderer/all])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Entities
+  ;; MIDI
 
-(db/dispatch! [::renderer/set-entities (entities/enabled-entities)])
-(db/dispatch! [::renderer/set-entities [entities/fractal-canvas]])
-(db/dispatch! [::renderer/set-entities [entities/rgb-triangle]])
-(db/dispatch! [::renderer/set-entities [entities/texture]])
-(db/dispatch! [::renderer/set-entities [entities/texture entities/texture2]])
+  (db/dispatch! [::midi/event-received {:control 72 :value 1}])
+  (db/dispatch! [::midi/event-received {:control 79 :value 50}])
+  (db/dispatch! [::midi/event-received {:control 91 :value 60}])
 
-(db/subscribe [::renderer/all])
-
-(db/dispatch! [::renderer/clear])
+  (db/subscribe [::midi/cc-value 72 [10 20]])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Particles
+  ;; Entities
 
-(db/dispatch! [::particle/clear])
+  (db/dispatch! [::renderer/set-entities (entities/enabled-entities)])
+  (db/dispatch! [::renderer/set-entities [entities/fractal-canvas]])
+  (db/dispatch! [::renderer/set-entities [entities/rgb-triangle]])
+  (db/dispatch! [::renderer/set-entities [entities/texture]])
+  (db/dispatch! [::renderer/set-entities [entities/texture entities/texture2]])
 
-(db/dispatch! [::particle/init 10])
+  (db/subscribe [::renderer/all])
 
-(db/subscribe [::particle/particles])
+  (db/dispatch! [::renderer/clear])
 
-(count (::renderer/entities @db/db))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Particles
 
-(count (::renderer/renderers @db/db))
-(count (::particle/particles @db/db))
+  (db/dispatch! [::particle/clear])
+
+  (db/dispatch! [::particle/init 10])
+
+  (db/subscribe [::particle/particles])
+
+  (count (::renderer/entities @db/db))
+
+  (count (::renderer/renderers @db/db))
+  (::particle/particles @db/db)
 
 
   )
