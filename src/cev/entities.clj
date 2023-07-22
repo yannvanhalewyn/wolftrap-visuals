@@ -25,7 +25,7 @@
 (def rgb-triangle
   (entity/make
    {:entity/name "RGB Triangle"
-    ;; :entity/enabled? true
+    :entity/enabled? false
 
     :mesh/vertices
     [-1.0 -1.0 0.0 1.0 0.0 0.0
@@ -43,7 +43,7 @@
 (def texture
   (entity/make
    {:entity/name "Texture"
-    ;; :entity/enabled? true
+    :entity/enabled? false
 
     :mesh/vertices
     [ 1.0  1.0 0.0 1.0 1.0
@@ -70,8 +70,8 @@
     :glsl/fragment-source (shader/resource-file "texture3.frag")
 
     :glsl/attributes
-    [{:glsl/name "point" :glsl/dimensions 3}
-     {:glsl/name "texcoord" :glsl/dimensions 2}]}))
+    [{:glsl/name "screenUV" :glsl/dimensions 3}
+     {:glsl/name "textureUV" :glsl/dimensions 2}]}))
 
 (defn make-noise []
   (entity/make
