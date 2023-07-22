@@ -11,10 +11,14 @@
 
 (defn db [] @db/db)
 
+(defmethod db/handle-event ::refresh
+  [{:keys [db]} _]
+  {:dispatch [[::renderer/set-entities (vals (::renderer/entities db))]]})
+
 (defn start-shader-refresher! []
   (watcher/setup-watcher!
    ["src/cev/shaders/"]
-   (fn [_files] (db/dispatch! [::renderer/refresh]))))
+   (fn [_files] (db/dispatch! [::refresh]))))
 
 (defn stop-shader-refresher! []
   (watcher/cancel-watcher!))
