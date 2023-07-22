@@ -3,6 +3,7 @@
    [sc.api]
    [cev.db :as db]
    [cev.midi :as midi]
+   [cev.engine.math :as math]
    [cev.particle :as particle]
    [cev.renderer :as renderer]
    [cev.entities :as entities]
@@ -35,8 +36,9 @@
 
 (defn inspect-db! [db]
   (println (ansi/cyan (str "\n#" :particles)))
-  (doseq [entity (take 5 (::particle/particles db))]
-    (report-keys entity [:particle/position :particle/size]))
+  (doseq [particle (take 5 (::particle/particles db))]
+    (report-keys (update particle :particle/position math/->clj)
+                 [:particle/position :particle/size]))
 
   (println (ansi/cyan (str "\n#" :entities)))
   (doseq [entity (vals (::renderer/entities db))]

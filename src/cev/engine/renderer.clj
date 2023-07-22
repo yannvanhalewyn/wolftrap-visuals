@@ -136,8 +136,10 @@
 
 (defn bind-uniform-2f
   "Binds a vec2 uniform to the renderer's shader"
-  [renderer attr-name v]
-  (shader/uniform-2f (:gl/program renderer) attr-name (math/x v) (math/y v)))
+  ([renderer attr-name v]
+   (bind-uniform-2f renderer attr-name (.getX v) (.getY v)))
+  ([renderer attr-name x y]
+   (shader/uniform-2f (:gl/program renderer) attr-name x y)))
 
 (defn mount!
   "Prepares the renderer for being used"

@@ -22,10 +22,12 @@
      num-particles
      (fn []
        (make-particle
-        [(math/random (- width) width)
-         (math/random (- height) height)]
-        [(math/random (- speed) speed)
-         (math/random (- speed) speed)]
+        (math/vec2
+         (math/random (- width) width)
+         (math/random (- height) height))
+        (math/vec2
+         (math/random (- speed) speed)
+          (math/random (- speed) speed))
         (math/random 10 100)
         max-age)))))
 
@@ -48,6 +50,10 @@
 
     :glsl/attributes
     [{:glsl/name "uv" :glsl/dimensions 2}]}))
+
+(defn update! [{:particle/keys [position velocity]} dt]
+  (.setX position (+ (.getX position) (/ (.getX velocity) 1000)))
+  (.setY position (+ (.getY position) (/ (.getY velocity) 1000))))
 
 (defmethod db/handle-event ::init
   [{:keys [db ::window/width ::window/height]} [_ num-particles]]

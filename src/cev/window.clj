@@ -59,7 +59,7 @@
 
 (defn populate! []
   ;; (db/dispatch! [::renderer/set-entities [entities/texture entities/texture2]])
-  (db/dispatch! [::particle/init 50]))
+  (db/dispatch! [::particle/init 200]))
 
 (defn- key-callback [window key scancode action mods]
   ;; (println "key-event" :key key :scancode scancode :action action :mods mods)
@@ -75,9 +75,13 @@
       nil)))
 
 (defn- update! [timer throttle]
-  (when (timer/throttled? timer throttle)
-    (log/info :fps (timer/fps timer)))
-  (handle-queue!))
+  (let [dt (timer/elapsed timer)]
+    (when (timer/throttled? timer throttle)
+      (log/info :fps (timer/fps timer)))
+    (handle-queue!)
+
+    (doseq [particle (first (db/subscribe [::particle/particles]))]
+      (particle/update! particle dt))))
 
 (defn- draw! [window timer]
   (let [[width height] (window/get-size window)]
@@ -90,7 +94,7 @@
          (if renderer
            (gl.renderer/batch
             renderer
-            (gl.renderer/bind-uniform-2f renderer "resolution" [width height])
+            (gl.renderer/bind-uniform-2f renderer "resolution" width height)
             (gl.renderer/bind-uniform-1f renderer "iterations" (db/subscribe [::midi/cc-value 72 [1.0 20.0]]))
             (gl.renderer/bind-uniform-1f renderer "complexity" (db/subscribe [::midi/cc-value 79 [0.0 1.0]]))
             (gl.renderer/bind-uniform-1f renderer "brightness" (db/subscribe [::midi/cc-value 91 [0.01 1.0]]))
@@ -108,7 +112,7 @@
            (gl.renderer/batch
             renderer
             (doseq [particle particles]
-              (gl.renderer/bind-uniform-2f renderer "resolution" [width height])
+              (gl.renderer/bind-uniform-2f renderer "resolution" width height)
               (gl.renderer/bind-uniform-2f renderer "position" (:particle/position particle))
               (gl.renderer/bind-uniform-1f renderer "size" (:particle/size particle 30))
               (gl.renderer/draw1! renderer)))
