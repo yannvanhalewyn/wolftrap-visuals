@@ -41,16 +41,12 @@
   [_ [event-name]]
   (log/error :db/unknown-event-handler "Unknown event" event-name))
 
-(def ^:private verbose false)
-
 (defn dispatch! [event]
-  (log/info :db/event (ansi/bold (ansi/yellow (first event)))
-            (when verbose (rest event)))
+  (log/info :db/event (ansi/bold (ansi/yellow (first event))))
   (when (nil? event)
     (throw (ex-info "Empty event" {:event event})))
-  (let [coeffects (reduce (fn [cofx interceptor]
-                            ((::before interceptor) cofx))
-                          {} (vals @interceptors))
+  (let [coeffects (->> (keep ::before (vals @interceptors))
+                       (reduce (fn [cofx before-fn] (before-fn cofx)) {}))
         effects (handle-event coeffects event)]
     (doseq [effect effects]
       (execute-effect! effect))))

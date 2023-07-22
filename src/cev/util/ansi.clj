@@ -10,7 +10,7 @@
   (if supported?
     (fn [ansi s]
       (str ansi s DEFAULT))
-    identity))
+    (fn [_ s] s)))
 
 (defn bold [s]
   (make "\033[1m" s))

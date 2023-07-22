@@ -57,8 +57,8 @@
         (db/dispatch! event)))))
 
 (defn populate! []
-  ;; (db/dispatch! [::renderer/set-entities [entities/texture entities/texture2]])
-  (db/dispatch! [::particle/init 50]))
+  (db/dispatch! [::renderer/set-entities [entities/texture entities/texture2]])
+  #_(db/dispatch! [::particle/init 50]))
 
 (defn- key-callback [window key scancode action mods]
   ;; (println "key-event" :key key :scancode scancode :action action :mods mods)
@@ -80,7 +80,7 @@
 
      ;; Entity renderer
      (doseq [[entity renderer] (db/subscribe [::renderer/all])]
-       (when (and renderer (not (contains? entity :gl.renderer/id)))
+       (if (and renderer (not (contains? entity :cev.particle/renderer)))
          (gl.renderer/batch
           renderer
           (gl.renderer/bind-uniform-2f renderer "resolution" [width height])
@@ -88,7 +88,8 @@
           (gl.renderer/bind-uniform-1f renderer "complexity" (db/subscribe [::midi/cc-value 79 [0.0 1.0]]))
           (gl.renderer/bind-uniform-1f renderer "brightness" (db/subscribe [::midi/cc-value 91 [0.01 1.0]]))
           (gl.renderer/bind-uniform-1f renderer "time" (GLFW/glfwGetTime))
-          (gl.renderer/draw-one! renderer))))
+          (gl.renderer/draw1! renderer))
+         (log/error :renderer "No renderer")))
 
      ;; Particles renderer
      (let [[particles renderer] (db/subscribe [::particle/particles])]

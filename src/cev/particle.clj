@@ -44,7 +44,8 @@
 (defmethod db/handle-event ::init
   [{:keys [db ::window/width ::window/height]} [_ num-particles]]
   {:db (assoc db ::particles (make-particles num-particles width height))
-   :dispatch [[::renderer/add (make-entity)]]})
+   :dispatch [[::renderer/clear]
+              [::renderer/add (make-entity)]]})
 
 (defmethod db/handle-event ::clear
   [{:keys [db]} _]

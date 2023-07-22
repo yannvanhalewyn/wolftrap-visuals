@@ -148,6 +148,8 @@
   (GL11/glBlendFunc GL11/GL_SRC_ALPHA GL11/GL_ONE)
   (GL11/glDepthMask false)
   (when-let [tex (:gl/tex renderer)]
+    ;; Is this necessary?
+    (GL13/glActiveTexture GL13/GL_TEXTURE0)
     (GL11/glBindTexture GL11/GL_TEXTURE_2D tex)))
 
 (defn unmount!
@@ -163,10 +165,7 @@
        ~@body
        (unmount!)))
 
-(defn draw-one! [renderer]
-  ;; Use GL11/GL_TRIANGLE_STRIP for lines I guess
+(defn draw1! [renderer]
+  ;; TODO Use GL11/GL_TRIANGLE_STRIP for particles and lines?
   (GL11/glDrawElements
    GL11/GL_TRIANGLES (:gl/vertex-count renderer) GL11/GL_UNSIGNED_INT 0))
-
-(defn draw! [renderer]
-  (batch renderer (draw-one! renderer)))

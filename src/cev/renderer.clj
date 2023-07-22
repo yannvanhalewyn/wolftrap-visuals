@@ -39,10 +39,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Loading entities
 
-(defmethod db/handle-event ::refresh
-  [{:keys [db]} _]
-  {:dispatch [[::set-entities (vals (:db/entities db))]]})
-
 (defmethod db/handle-event ::set-entities
   [{:keys [db]} [_ new-entities]]
   (let [renderers (vals (::renderers db))]
@@ -68,11 +64,13 @@
   [{:keys [db]} [_ entity-id renderer]]
   {:db (-> db
            (assoc-in [::renderers (:gl/id renderer)] renderer)
-           (assoc-in [::entities entity-id :gl/id] (:gl/id renderer)))})
+           (assoc-in [::entities entity-id :gl/id] (:gl/id renderer)))
+   :dev/inspect-db false})
 
 (defmethod db/handle-event :gl/destroy-renderer--success
   [{:keys [db]} [_ renderer-id]]
-  {:db (m/dissoc-in db [::renderers renderer-id])})
+  {:db (m/dissoc-in db [::renderers renderer-id])
+   :dev/inspect-db false})
 
 (defmethod db/read ::all
   [{::keys [entities renderers]} _]
