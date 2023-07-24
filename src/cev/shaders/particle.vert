@@ -1,11 +1,12 @@
 #version 410 core
 
 in mediump vec2 uv;
-out mediump vec2 fragUV;
 
 uniform vec2 resolution;
 uniform vec2 position;
 uniform float size;
+
+out mediump vec2 fragUV;
 
 void main()
 {

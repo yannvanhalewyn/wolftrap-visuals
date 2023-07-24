@@ -1,7 +1,6 @@
 (ns cev.engine.renderer
   (:require
    [cev.log :as log]
-   [cev.engine.math :as math]
    [cev.engine.shader :as shader])
   (:import
    [org.lwjgl BufferUtils]
@@ -109,7 +108,7 @@
         "Compiled entity %s, program-id: %d | vao: %d | vertex count: %d"
         (:entity/id entity) program vao (count indices)))
       (GL30/glBindVertexArray 0)
-      {:gl/id (random-uuid)
+      {::id (random-uuid)
        :gl/program program
        :gl/vao vao
        :gl/vbo vbo
@@ -166,6 +165,9 @@
   `(do (mount! ~renderer)
        ~@body
        (unmount!)))
+
+(defn transmit-uniforms! [renderer gl-blueprint coll]
+  ((:glsl/uniform-transmitter gl-blueprint) (:gl/program renderer) coll))
 
 (defn draw1! [renderer]
   ;; TODO Use GL11/GL_TRIANGLE_STRIP for particles and lines?

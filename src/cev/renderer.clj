@@ -1,16 +1,16 @@
 (ns cev.renderer
   (:require
    [cev.db :as db]
-   [cev.log :as log]
    [cev.engine.renderer :as gl.renderer]
-   [medley.core :as m]
-   [cev.util.ansi :as ansi]))
+   [cev.log :as log]
+   [cev.util.ansi :as ansi]
+   [medley.core :as m]))
 
 (defn get-renderer [db renderer-id]
   (some
    (fn [[entity renderer]]
      (when (= (::batch-id entity) renderer-id)
-       renderer))
+       [entity renderer]))
    (db/read db [::all])))
 
 (defn handle-queue-message!
@@ -31,7 +31,7 @@
     :gl/destroy-renderer
     (let [renderer (first params)]
       (gl.renderer/destroy! renderer)
-      [[:gl/destroy-renderer--success (:gl/id renderer)] nil])
+      [[:gl/destroy-renderer--success (::id renderer)] nil])
 
     [nil [:gl/unknown-action action]]))
 
@@ -63,8 +63,8 @@
 (defmethod db/handle-event :gl/load-renderer--success
   [{:keys [db]} [_ entity-id renderer]]
   {:db (-> db
-           (assoc-in [::renderers (:gl/id renderer)] renderer)
-           (assoc-in [::entities entity-id :gl/id] (:gl/id renderer)))
+           (assoc-in [::renderers (::id renderer)] renderer)
+           (assoc-in [::entities entity-id ::id] (::id renderer)))
    :dev/inspect-db false})
 
 (defmethod db/handle-event :gl/destroy-renderer--success
@@ -75,4 +75,4 @@
 (defmethod db/read ::all
   [{::keys [entities renderers]} _]
   (for [entity (vals entities)]
-    [entity (get renderers (:gl/id entity))]))
+    [entity (get renderers (::id entity))]))

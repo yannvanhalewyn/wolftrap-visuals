@@ -6,7 +6,7 @@
    [org.lwjgl.glfw GLFW GLFWErrorCallback GLFWKeyCallback]
    [org.lwjgl.opengl GL GL11]))
 
-(defn get-size [window]
+(defn get-resolution [window]
   (let [width (BufferUtils/createIntBuffer 1)
         height (BufferUtils/createIntBuffer 1)]
     (GLFW/glfwGetFramebufferSize window width height)

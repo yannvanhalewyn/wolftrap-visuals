@@ -10,6 +10,9 @@
    [cev.dev.watcher :as watcher]
    [cev.util.ansi :as ansi]))
 
+(set! *warn-on-reflection* true)
+(set! *print-namespace-maps* true)
+
 (defn db [] @db/db)
 
 (defmethod db/handle-event ::refresh
@@ -36,13 +39,16 @@
     (report-keys (update particle :particle/position math/->clj)
                  [:particle/position :particle/size]))
 
+  (when (> (count (::particle/particles db)) 5)
+    (println "...and" (- (count (::particle/particles db)) 5) "more."))
+
   (println (ansi/cyan (str "\n#" :entities)))
   (doseq [entity (vals (::renderer/entities db))]
-    (report-keys entity [:entity/name :entity/id :gl/id ::renderer/batch-id]))
+    (report-keys entity [:entity/name :entity/id ::id ::renderer/batch-id]))
 
   (println (ansi/cyan (str "\n# " :renderers)))
   (doseq [renderer (vals (::renderer/renderers db))]
-    (report-keys renderer [:gl/id :gl/vao :gl/program]))
+    (report-keys renderer [::id :gl/vao :gl/program]))
   (println ""))
 
 (db/reg-fx :dev/inspect-db #(when % (inspect-db! (db))))

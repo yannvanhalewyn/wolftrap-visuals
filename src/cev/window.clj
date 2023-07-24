@@ -60,9 +60,7 @@
   ;; (db/dispatch! [::renderer/set-entities [entities/texture entities/texture2]])
   (db/dispatch! [::particle/init 200]))
 
-(defn- key-callback [window key scancode action mods]
-  ;; (println "key-event" :key key :scancode scancode :action action :mods mods)
-
+(defn- key-callback [window key _scancode action _mods]
   (when (= action GLFW/GLFW_RELEASE)
     (condp = key
       GLFW/GLFW_KEY_Q
@@ -83,7 +81,7 @@
       (particle/update! particle dt))))
 
 (defn- draw! [window timer]
-  (let [[width height] (window/get-size window)]
+  (let [resolution (window/get-resolution window)]
     (window/draw-frame!
      window
 
@@ -103,17 +101,17 @@
              (log/error :gl/render-error "No renderer (entity renderer)")))))
 
      ;; Particles renderer
-     (let [[particles renderer] (db/subscribe [::particle/particles])]
+     (let [[particles [gl-blueprint renderer]] (db/subscribe [::particle/particles])]
        (when (timer/throttled? timer)
-         (log/debug :rendering :particles (count particles)))
+         #_(log/debug :rendering :particles (count particles)))
        (when (seq particles)
          (if renderer
            (gl.renderer/batch
             renderer
             (doseq [particle particles]
-              (gl.renderer/bind-uniform-2f renderer "resolution" width height)
-              (gl.renderer/bind-uniform-2f renderer "position" (:particle/position particle))
-              (gl.renderer/bind-uniform-1f renderer "size" (:particle/size particle 30))
+              (gl.renderer/transmit-uniforms!
+               renderer gl-blueprint (merge {::window/resolution resolution}
+                                            particle))
               (gl.renderer/draw1! renderer)))
            (when (timer/throttled? timer)
              (log/error :gl/render-error "No renderer (batch renderer)"))))))))
@@ -121,11 +119,7 @@
 (defn make-interceptor [window]
   {::db/before
    (fn [cofx]
-     (let [[width height] (window/get-size window)]
-       (assoc cofx
-         :gl/window window
-         ::window/width width
-         ::window/height height)))})
+     (merge cofx {:gl/window window} (window/get-resolution window)))})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Running

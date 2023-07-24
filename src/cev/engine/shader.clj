@@ -23,11 +23,6 @@
       (log/error :shader/linking-error (GL20/glGetProgramInfoLog program 1024))
       program)))
 
-(defn- uniform-location [program name]
-  (let [loc (GL20/glGetUniformLocation program name)]
-    (when-not (= loc -1)
-      loc)))
-
 (defn resource-file [shader-name]
   (io/resource (str "cev/shaders/" shader-name)))
 
@@ -46,10 +41,30 @@
 (defn delete! [program]
   (GL20/glDeleteProgram program))
 
-(defn uniform-2f [program name x y]
-  (when-let [loc (uniform-location program name)]
-    (GL20/glUniform2f loc x y)))
+(defn- uniform-location [program name]
+  (let [loc (GL20/glGetUniformLocation program name)]
+    (when-not (= loc -1)
+      loc)))
 
 (defn uniform-1f [program name x]
   (when-let [loc (uniform-location program name)]
     (GL20/glUniform1f loc x)))
+
+(defn uniform-2f
+  ([program gl-name vec]
+   (uniform-2f program gl-name (.getX vec) (.getY vec)))
+  ([program name x y]
+   (when-let [loc (uniform-location program name)]
+     (GL20/glUniform2f loc x y))))
+
+(defn uniform-transmitter
+  "Returns a function that will execute the GL calls in order to load the
+  uniforms a program given an extraction function from a collection."
+  [uniform-descriptors]
+  (println uniform-descriptors)
+  (fn [program coll]
+    (doseq [[gl-name data-type extract-fn] uniform-descriptors
+          :let [value (extract-fn coll)]]
+      (case data-type
+        :1f (uniform-1f program gl-name value)
+        :2f (uniform-2f program gl-name value)))))

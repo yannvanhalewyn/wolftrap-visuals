@@ -14,22 +14,23 @@
    :particle/age 0
    :particle/max-age max-age})
 
-(defn- make-particles [num-particles _width _height]
-  (let [width 1 height 1
-        speed 20
-        max-age 20]
-    (repeatedly
-     num-particles
-     (fn []
-       (make-particle
-        (math/vec2
-         (math/random (- width) width)
-         (math/random (- height) height))
-        (math/vec2
-         (math/random (- speed) speed)
-          (math/random (- speed) speed))
-        (math/random 10 100)
-        max-age)))))
+(defn- make-random-particle [[width height] speed max-age]
+  (make-particle
+   (math/vec2
+    (math/random (- width) width)
+    (math/random (- height) height))
+   (math/vec2
+    (math/random (- speed) speed)
+    (math/random (- speed) speed))
+   (math/random 10 100)
+   max-age))
+
+(defn- make-particles [num-particles _resolution]
+  (let [resolution [1 1]
+        velocity 20
+        max-age 20
+        make-random #(make-random-particle resolution velocity max-age)]
+    (repeatedly num-particles make-random)))
 
 (defn make-gl-blueprint []
   (entity/make
@@ -49,15 +50,21 @@
     :glsl/fragment-source (shader/resource-file "particle.frag")
 
     :glsl/attributes
-    [{:glsl/name "uv" :glsl/dimensions 2}]}))
+    [{:glsl/name "uv" :glsl/dimensions 2}]
+
+    :glsl/uniform-transmitter
+    (shader/uniform-transmitter
+     [["resolution" :2f #(apply math/->Vec2 (::window/resolution %))]
+      ["position"   :2f :particle/velocity]
+      ["size"       :1f :particle/size]])}))
 
 (defn update! [{:particle/keys [position velocity]} dt]
   (.setX position (+ (.getX position) (/ (.getX velocity) 1000)))
   (.setY position (+ (.getY position) (/ (.getY velocity) 1000))))
 
 (defmethod db/handle-event ::init
-  [{:keys [db ::window/width ::window/height]} [_ num-particles]]
-  {:db (assoc db ::particles (make-particles num-particles width height))
+  [{:keys [db ::window/resolution]} [_ num-particles]]
+  {:db (assoc db ::particles (make-particles num-particles resolution))
    :dispatch [[::renderer/clear]
               [::renderer/add (make-gl-blueprint)]]})
 
