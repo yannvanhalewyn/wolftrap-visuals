@@ -31,7 +31,7 @@
         (math/random 10 100)
         max-age)))))
 
-(defn make-entity []
+(defn make-gl-blueprint []
   (entity/make
    {:entity/name "Particle"
     ::renderer/batch-id ::renderer
@@ -59,7 +59,7 @@
   [{:keys [db ::window/width ::window/height]} [_ num-particles]]
   {:db (assoc db ::particles (make-particles num-particles width height))
    :dispatch [[::renderer/clear]
-              [::renderer/add (make-entity)]]})
+              [::renderer/add (make-gl-blueprint)]]})
 
 (defmethod db/handle-event ::clear
   [{:keys [db]} _]

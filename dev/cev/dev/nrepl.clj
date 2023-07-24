@@ -15,7 +15,7 @@
     (println "nREPL started on port" port)
 
     (when (flag? "--watch-shaders")
-      (dev/start-shader-refresher!))
+      (dev/start-shader-watcher!))
 
     (when-not (flag? "--no-window")
       (apply main/-main args))))

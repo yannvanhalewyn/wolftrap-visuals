@@ -8,7 +8,6 @@
    [cev.entities :as entities]
    [cev.renderer :as renderer]
    [cev.engine.renderer :as gl.renderer]
-   [cev.engine.math :as math]
    [cev.engine.timer :as timer]
    [cev.engine.window :as window])
   (:import

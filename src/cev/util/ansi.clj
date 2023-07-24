@@ -35,11 +35,3 @@
 
 (defn gray [s]
   (make "\u001b[38;5;240m" s))
-
-(defn severity [s]
-  (case s
-    "DEBUG" (gray s)
-    "INFO" (blue s)
-    "NOTICE" (yellow s)
-    "WARN" (yellow s)
-    (red s)))

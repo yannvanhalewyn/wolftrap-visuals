@@ -16,17 +16,13 @@
   [{:keys [db]} _]
   {:dispatch [[::renderer/set-entities (vals (::renderer/entities db))]]})
 
-(defn start-shader-refresher! []
+(defn start-shader-watcher! []
   (watcher/setup-watcher!
    ["src/cev/shaders/"]
    (fn [_files] (db/dispatch! [::refresh]))))
 
-(defn stop-shader-refresher! []
+(defn stop-shader-watcher! []
   (watcher/cancel-watcher!))
-
-(defn reload-shader-refresher! []
-  (stop-shader-refresher!)
-  (start-shader-refresher!))
 
 (defn report-keys [coll keys]
   (doseq [key keys]
@@ -53,8 +49,8 @@
 
 (comment
 
-  (start-shader-refresher!)
-  (stop-shader-refresher!)
+  (start-shader-watcher)
+  (stop-shader-watcher!)
 
   (inspect-db! @db/db)
 

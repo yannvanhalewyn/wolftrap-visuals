@@ -10,6 +10,7 @@
     (apply println (ansi/gray (format-date)) type
            (ansi/bold (ansi/green component)) args)))
 
-(def info (logger (ansi/gray "[info]")))
 (def error (logger (ansi/red "[error]")))
+(def warn (logger (ansi/yellow "[warning]")))
 (def debug (logger (ansi/yellow "[debug]")))
+(def info (logger (ansi/gray "[info]")))
