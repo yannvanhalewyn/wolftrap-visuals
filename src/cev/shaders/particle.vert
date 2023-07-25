@@ -6,17 +6,19 @@ uniform vec2 resolution;
 uniform vec2 position;
 uniform float size;
 
-out mediump vec2 fragUV;
+out mediump vec2 frag_uv;
 
 void main()
 {
-  vec2 screenUV = uv;
-  // Make a perfect square
-  screenUV.x *= resolution.y / resolution.x;
+  // Find the corner using UV
+  vec2 pos = position + uv * size / 2;
 
-  // Scale the quad to the size in pixels
-  screenUV *= size / resolution.x;
+  // pos goes from 0 to resolution.
+  // We want it from -1 to 1
+  pos = (pos * 2) / resolution - 1;
 
-  gl_Position = vec4(position + screenUV, 0.0, 1.0);
-  fragUV = uv;
+  // And then scale back down
+  gl_Position = vec4(pos, 0.0, 1.0);
+  // gl_Position = vec4(uv * 2, 0.0, 1.0);
+  frag_uv = uv;
 }

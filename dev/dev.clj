@@ -22,7 +22,8 @@
 (defn start-shader-watcher! []
   (watcher/setup-watcher!
    ["src/cev/shaders/"]
-   (fn [_files] (db/dispatch! [::refresh]))))
+   ;; TODO refresh is not working
+   (fn [_files] (db/dispatch! [::particle/init 1]))))
 
 (defn stop-shader-watcher! []
   (watcher/cancel-watcher!))
@@ -33,23 +34,26 @@
       (println (ansi/magenta key) (get coll key))))
   (println (ansi/gray "---")))
 
-(defn inspect-db! [db]
-  (println (ansi/cyan (str "\n#" :particles)))
-  (doseq [particle (take 5 (::particle/particles db))]
-    (report-keys (update particle :particle/position math/->clj)
-                 [:particle/position :particle/size]))
+(defn inspect-db!
+  ([]
+   (inspect-db! @db/db))
+  ([db]
+   (println (ansi/cyan (str "\n#" :particles)))
+   (doseq [particle (take 5 (::particle/particles db))]
+     (report-keys (update particle :particle/position math/->clj)
+                  [:particle/position :particle/size]))
 
-  (when (> (count (::particle/particles db)) 5)
-    (println "...and" (- (count (::particle/particles db)) 5) "more."))
+   (when (> (count (::particle/particles db)) 5)
+     (println "...and" (- (count (::particle/particles db)) 5) "more."))
 
-  (println (ansi/cyan (str "\n#" :entities)))
-  (doseq [entity (vals (::renderer/entities db))]
-    (report-keys entity [:entity/name :entity/id ::id ::renderer/batch-id]))
+   (println (ansi/cyan (str "\n#" :entities)))
+   (doseq [entity (vals (::renderer/entities db))]
+     (report-keys entity [:entity/name :entity/id ::id ::renderer/batch-id]))
 
-  (println (ansi/cyan (str "\n# " :renderers)))
-  (doseq [renderer (vals (::renderer/renderers db))]
-    (report-keys renderer [::id :gl/vao :gl/program]))
-  (println ""))
+   (println (ansi/cyan (str "\n# " :renderers)))
+   (doseq [renderer (vals (::renderer/renderers db))]
+     (report-keys renderer [::id :gl/vao :gl/program]))
+   (println "")))
 
 (db/reg-fx :dev/inspect-db #(when % (inspect-db! (db))))
 

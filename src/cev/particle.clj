@@ -14,20 +14,20 @@
    :particle/age 0
    :particle/max-age max-age})
 
-(defn- make-random-particle [[width height] speed max-age]
+(defn- make-random-particle [[width height] velocity max-age]
   (make-particle
    (math/vec2
-    (math/random (- width) width)
-    (math/random (- height) height))
+    (math/random 0 width)
+    (math/random 0 height))
+   ;; TODO should normalize vector and scale with speed
    (math/vec2
-    (math/random (- speed) speed)
-    (math/random (- speed) speed))
-   (math/random 10 100)
+    (math/random (- velocity) velocity)
+    (math/random (- velocity) velocity))
+   (math/random 50 100)
    max-age))
 
-(defn- make-particles [num-particles _resolution]
-  (let [resolution [1 1]
-        velocity 20
+(defn- make-particles [num-particles resolution]
+  (let [velocity 20
         max-age 20
         make-random #(make-random-particle resolution velocity max-age)]
     (repeatedly num-particles make-random)))
@@ -38,10 +38,10 @@
     ::renderer/batch-id ::renderer
 
     :mesh/vertices
-    [-1.0 -1.0
-     -1.0  1.0
-      1.0  1.0
-      1.0 -1.0]
+    [-1.0 -1.0  ;; Bottom left
+     -1.0  1.0  ;; Top left
+      1.0  1.0  ;; Top right
+      1.0 -1.0] ;; Bottom right
 
     :mesh/indices
     [0 1 2 0 2 3]
@@ -55,7 +55,7 @@
     :glsl/uniform-transmitter
     (shader/uniform-transmitter
      [["resolution" :2f #(apply math/->Vec2 (::window/resolution %))]
-      ["position"   :2f :particle/velocity]
+      ["position"   :2f :particle/position]
       ["size"       :1f :particle/size]])}))
 
 (defn update! [{:particle/keys [position velocity]} dt]
@@ -66,7 +66,8 @@
   [{:keys [db ::window/resolution]} [_ num-particles]]
   {:db (assoc db ::particles (make-particles num-particles resolution))
    :dispatch [[::renderer/clear]
-              [::renderer/add (make-gl-blueprint)]]})
+              [::renderer/add (make-gl-blueprint)]]
+   :dev/inspect-db true})
 
 (defmethod db/handle-event ::clear
   [{:keys [db]} _]

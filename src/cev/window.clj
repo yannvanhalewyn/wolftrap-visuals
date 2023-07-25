@@ -3,7 +3,6 @@
   (:require
    [cev.db :as db]
    [cev.log :as log]
-   [cev.midi :as midi]
    [cev.particle :as particle]
    [cev.entities :as entities]
    [cev.renderer :as renderer]
@@ -119,7 +118,7 @@
 (defn make-interceptor [window]
   {::db/before
    (fn [cofx]
-     (merge cofx {:gl/window window} (window/get-resolution window)))})
+     (merge cofx {:gl/window window} {::window/resolution (window/get-resolution window)}))})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Running
